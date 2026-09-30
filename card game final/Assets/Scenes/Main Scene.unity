@@ -875,9 +875,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 973526289}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce6aefffde0aa2b4d841f8d488d39d1f, type: 3}
+  m_Script: {fileID: 11500000, guid: 3a06e4957ed6fba4d89a7ed02d509912, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Deck
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
   texthand1: {fileID: 345494914}
   texthand2: {fileID: 800620417}
   texthand3: {fileID: 1096533130}
