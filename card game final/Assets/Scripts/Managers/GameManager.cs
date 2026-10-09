@@ -23,9 +23,10 @@ public class GameManager : MonoBehaviour
     private Player _lastPlayer = new Player();
     
     private readonly List<Player> _players = new List<Player>();
+    private List<Player> _playersActive;
     
     private int currentPlayerIndex;
-    private int skipsThisSet;
+    private int playersOut;
     private int setIndex;
 
     public TMP_Text placedText;
@@ -89,13 +90,20 @@ public class GameManager : MonoBehaviour
             p.SortHand();
         }
         
+        _playersActive = new List<Player>(_players);
         UpdateDebugHandsText();
     }
 
     private void StartNextTurn()
     {
+        if (!_playersActive.Contains(_players[currentPlayerIndex]))
+        {
+            Debug.Log(_players[currentPlayerIndex].playerName + " is out of this round");
+            return; 
+        }
+        
         Debug.Log("Turn Starting for " + _players[currentPlayerIndex].playerName);
-
+        
         if (_currentCardInSet == null)
             _currentCardInSet = new CardData();
         CardData cardPlayed = _players[currentPlayerIndex].PlayCard(_currentCardInSet);
@@ -105,7 +113,7 @@ public class GameManager : MonoBehaviour
             _currentCardInSet = cardPlayed;
             placedText.text = cardPlayed.rank + " of " + cardPlayed.suit;
             _lastPlayer =  _players[currentPlayerIndex];
-            skipsThisSet = 0;
+            
 /*
             if (currentPlayerIndex == 0)
             {
@@ -117,13 +125,22 @@ public class GameManager : MonoBehaviour
                 return;
             }
         }
-        else
+        else // Player has no cards that can be played
         {
-            skipsThisSet++;
+            //playersOut++;
+
+            _playersActive.Remove(_playersActive[currentPlayerIndex]);
             Debug.Log("CardPlayed is null, " + _players[currentPlayerIndex].playerName + " skipped");
             placedText.text = _players[currentPlayerIndex].playerName + " skipped";
 
-            if (skipsThisSet >= 3)
+            /*
+            if (playersOut >= 3)
+            {
+                EndSet();
+                return;
+            }*/
+
+            if (_playersActive.Count <= 1)
             {
                 EndSet();
                 return;
@@ -132,7 +149,7 @@ public class GameManager : MonoBehaviour
         }
         currentPlayerIndex =  (currentPlayerIndex + 1) % 4;
         
-        skipsText.text = "Skips in a row: " + skipsThisSet;
+        skipsText.text = "Skips in a row: " + playersOut;
         
         UpdateDebugHandsText();
     }
@@ -141,8 +158,10 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Set Over, " +  _lastPlayer.playerName + " wins!");
         
-        skipsThisSet = 0;
+        playersOut = 0;
         setIndex++;
+
+        _playersActive = new List<Player>(_players);
 
         _currentCardInSet = null;
         placedText.text = "";
