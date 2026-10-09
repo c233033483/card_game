@@ -9,21 +9,27 @@ public enum GameState
     GameOver
 }
 
-
+/// <summary>
+/// 25/09/26 For Managing turns in rounds, ends of sets, games. Setting places.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
-    /// <summary>
-    /// 25/09/26 For Managing turns in rounds, ends of sets, games. Setting places.
-    /// </summary>
-    /// <returns></returns>
+    public HandManager handManager;
 
     private Deck _deck;
     private GameState _gameState;
+    
     private CardData _currentCardInSet =  new CardData();
+    private Player _lastPlayer = new Player();
     
     private readonly List<Player> _players = new List<Player>();
-    private int currentPlayerIndex;
     
+    private int currentPlayerIndex;
+    private int skipsThisSet;
+    private int setIndex;
+
+    public TMP_Text placedText;
+    public TMP_Text skipsText;
     
     public TMP_Text texthand1;
     public TMP_Text texthand2;
@@ -39,9 +45,16 @@ public class GameManager : MonoBehaviour
         _deck.BuildDeck();
         _deck.RandomiseDeck();
         Deal();
-        
-        StartNextTurn();
     }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            StartNextTurn();
+        }
+    }
+    
 
     private void CreatePlayers()
     {
@@ -59,11 +72,16 @@ public class GameManager : MonoBehaviour
     
     private void Deal()
     {
-        //in future, have a list of decks from the player class.
+        //in future, have a list of decks from the player class instead.
 
         for (int i = 0; i < _deck.gameDeck.Count; i++)
         {
-            _players[i % 4].hand.Add(_deck.gameDeck[i]); //players[i%players.count].Add(gamedeck[i]);
+            _players[i % 4].hand.Add(_deck.gameDeck[i]);
+
+            if (i % 4 == 0)
+            {
+                handManager.AddCard(_deck.gameDeck[i]); // Debug for now
+            }
         }
 
         foreach (Player p in _players)
@@ -71,18 +89,72 @@ public class GameManager : MonoBehaviour
             p.SortHand();
         }
         
-        texthand1.text = HandToString(_players[0].hand);
-        texthand2.text = HandToString(_players[1].hand);
-        texthand3.text = HandToString(_players[2].hand);
-        texthand4.text = HandToString(_players[3].hand);
+        UpdateDebugHandsText();
     }
 
-    public void StartNextTurn()
+    private void StartNextTurn()
     {
-        Debug.Log("Turn Starting");
-        _players[currentPlayerIndex % 4].PlayCard(_currentCardInSet);
-        currentPlayerIndex++;
+        Debug.Log("Turn Starting for " + _players[currentPlayerIndex].playerName);
+
+        if (_currentCardInSet == null)
+            _currentCardInSet = new CardData();
+        CardData cardPlayed = _players[currentPlayerIndex].PlayCard(_currentCardInSet);
+
+        if (cardPlayed != null)
+        {
+            _currentCardInSet = cardPlayed;
+            placedText.text = cardPlayed.rank + " of " + cardPlayed.suit;
+            _lastPlayer =  _players[currentPlayerIndex];
+            skipsThisSet = 0;
+/*
+            if (currentPlayerIndex == 0)
+            {
+                handManager.RemoveCard(cardPlayed);
+            }*/
+            if (_players[currentPlayerIndex].hand.Count == 0)
+            {
+                EndRound(_players[currentPlayerIndex]);
+                return;
+            }
+        }
+        else
+        {
+            skipsThisSet++;
+            Debug.Log("CardPlayed is null, " + _players[currentPlayerIndex].playerName + " skipped");
+            placedText.text = _players[currentPlayerIndex].playerName + " skipped";
+
+            if (skipsThisSet >= 3)
+            {
+                EndSet();
+                return;
+            }
+            
+        }
+        currentPlayerIndex =  (currentPlayerIndex + 1) % 4;
+        
+        skipsText.text = "Skips in a row: " + skipsThisSet;
+        
+        UpdateDebugHandsText();
     }
+
+    private void EndSet()
+    {
+        Debug.Log("Set Over, " +  _lastPlayer.playerName + " wins!");
+        
+        skipsThisSet = 0;
+        setIndex++;
+
+        _currentCardInSet = null;
+        placedText.text = "";
+        
+        _lastPlayer = _players[currentPlayerIndex];
+    }
+
+    private void EndRound(Player winner)
+    {
+        Debug.Log("Round End, " + winner.playerName + " wins!");
+    }
+    
     
     /// <summary>
     /// Helper for debugging
@@ -97,6 +169,14 @@ public class GameManager : MonoBehaviour
             sb.AppendLine(card.rank + " of " + card.suit);
         }
         return sb.ToString();
-    }   
+    }
+
+    private void UpdateDebugHandsText()
+    {
+        texthand1.text = HandToString(_players[0].hand);
+        texthand2.text = HandToString(_players[1].hand);
+        texthand3.text = HandToString(_players[2].hand);
+        texthand4.text = HandToString(_players[3].hand);
+    }
 }
 

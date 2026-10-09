@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 
+/// </summary>
+
 public class Deck
 {
-    internal readonly List<CardData> gameDeck = new List<CardData>(); //Internal...?
+    internal readonly List<CardData> gameDeck = new List<CardData>(); 
     
     public void BuildDeck()
     {

@@ -5,8 +5,6 @@ public class Player
 {
     public string playerName;
     public List<CardData> hand = new List<CardData>();
-    
-    public GameManager gameManager;
 
     public void SortHand()
     {
@@ -17,18 +15,18 @@ public class Player
     }
 
     
-    public void PlayCard(CardData lastPlayed)
+    public CardData PlayCard(CardData lastPlayed)
     {
         foreach (CardData card in hand) // Sorted low-high
         {
-            Debug.Log(card.rank);
+            
+            //Debug.Log(card.rank);
             if (card.rank > lastPlayed.rank)
             {
-                lastPlayed.rank = card.rank; //needs to go back to the game manager, should i reference it ??
-                Debug.Log("Card put down: " + lastPlayed.rank);
+                hand.Remove(card);
+                return card; // Put down on top of the placed card
             }
         }
-        
-        //gameManager.StartNextTurn();
+        return null; // Nothing beats the placed card, pass
     }
 }
