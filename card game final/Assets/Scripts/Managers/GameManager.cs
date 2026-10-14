@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum GameState
 {
@@ -20,13 +22,14 @@ public class GameManager : MonoBehaviour
     private GameState _gameState;
     
     private CardData _currentCardInSet =  new CardData();
-    private Player _lastPlayer = new Player();
+    private Player _lastPlayer;
+    private Player _setWinner;
     
     private readonly List<Player> _players = new List<Player>();
     private List<Player> _playersActive;
-    
+
+    [SerializeField] private float dealTime;
     private int currentPlayerIndex;
-    private int playersOut;
     private int setIndex;
 
     public TMP_Text placedText;
@@ -36,16 +39,17 @@ public class GameManager : MonoBehaviour
     public TMP_Text texthand2;
     public TMP_Text texthand3;
     public TMP_Text texthand4;
+    public Button nextSetButton;
+    public Button nextRoundButton;
 
     private void Start()
     {
         _deck = new  Deck();
-
-        CreatePlayers();
         
-        _deck.BuildDeck();
-        _deck.RandomiseDeck();
-        Deal();
+        nextSetButton.gameObject.SetActive(false);
+        nextRoundButton.gameObject.SetActive(true);
+        
+        CreatePlayers();
     }
 
     private void Update()
@@ -61,7 +65,9 @@ public class GameManager : MonoBehaviour
     {
         for (int i = 0; i < 4; i++)
         {
-            Player p = new Player();
+            Player p;
+            if (i == 0) p = new HumanPlayer();
+            else p = new AIPlayer();
             string playerName = "Player " + (i + 1);
             p.playerName = playerName;
             
@@ -73,16 +79,9 @@ public class GameManager : MonoBehaviour
     
     private void Deal()
     {
-        //in future, have a list of decks from the player class instead.
-
         for (int i = 0; i < _deck.gameDeck.Count; i++)
         {
-            _players[i % 4].hand.Add(_deck.gameDeck[i]);
-
-            if (i % 4 == 0)
-            {
-                handManager.AddCard(_deck.gameDeck[i]); // Debug for now
-            }
+            StartCoroutine(DealCard(i));
         }
 
         foreach (Player p in _players)
@@ -94,11 +93,58 @@ public class GameManager : MonoBehaviour
         UpdateDebugHandsText();
     }
 
+    IEnumerator DealCard(int i)
+    {
+        YieldInstruction wait = new WaitForSeconds(dealTime);
+        _players[i % 4].hand.Add(_deck.gameDeck[i]);
+
+        if (i % 4 == 0)
+        {
+            handManager.AddCard(_deck.gameDeck[i]); // Debug for now
+        }
+
+        yield break;
+    }
+
+    public void StartSet()
+    {
+        _gameState =  GameState.Playing;
+        UpdateDebugHandsText();
+    }
+
+    public void StartRound()
+    {
+        nextRoundButton.gameObject.SetActive(false);
+        nextSetButton.gameObject.SetActive(false);
+        
+        handManager.ClearHand();
+        
+        _currentCardInSet = null;
+        _setWinner = null;
+        setIndex = 0;
+        placedText.text = "";
+        skipsText.text = "Skips in a row: 0";
+        
+        _deck = new Deck();
+        _deck.BuildDeck();
+        _deck.RandomiseDeck();
+        Deal();
+        
+        StartSet();
+    }
+
     private void StartNextTurn()
     {
+        if (_gameState != GameState.Playing)
+        {
+            Debug.Log("Gamestate is " +  _gameState);
+            return;
+        }
+        
         if (!_playersActive.Contains(_players[currentPlayerIndex]))
         {
             Debug.Log(_players[currentPlayerIndex].playerName + " is out of this round");
+            currentPlayerIndex = (currentPlayerIndex + 1) % 4;
             return; 
         }
         
@@ -114,11 +160,11 @@ public class GameManager : MonoBehaviour
             placedText.text = cardPlayed.rank + " of " + cardPlayed.suit;
             _lastPlayer =  _players[currentPlayerIndex];
             
-/*
             if (currentPlayerIndex == 0)
             {
-                handManager.RemoveCard(cardPlayed);
-            }*/
+                handManager.RemoveCard(_currentCardInSet); // Debug for now
+            }
+            
             if (_players[currentPlayerIndex].hand.Count == 0)
             {
                 EndRound(_players[currentPlayerIndex]);
@@ -127,29 +173,21 @@ public class GameManager : MonoBehaviour
         }
         else // Player has no cards that can be played
         {
-            //playersOut++;
-
-            _playersActive.Remove(_playersActive[currentPlayerIndex]);
+            _playersActive.Remove(_players[currentPlayerIndex]);
             Debug.Log("CardPlayed is null, " + _players[currentPlayerIndex].playerName + " skipped");
-            placedText.text = _players[currentPlayerIndex].playerName + " skipped";
-
-            /*
-            if (playersOut >= 3)
-            {
-                EndSet();
-                return;
-            }*/
 
             if (_playersActive.Count <= 1)
             {
+                UpdateDebugHandsText();
                 EndSet();
+                
                 return;
             }
             
         }
         currentPlayerIndex =  (currentPlayerIndex + 1) % 4;
         
-        skipsText.text = "Skips in a row: " + playersOut;
+        skipsText.text = "Skips in a row: " + (_players.Count - _playersActive.Count);
         
         UpdateDebugHandsText();
     }
@@ -158,25 +196,31 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Set Over, " +  _lastPlayer.playerName + " wins!");
         
-        playersOut = 0;
+        _setWinner = _lastPlayer;
         setIndex++;
-
         _playersActive = new List<Player>(_players);
-
         _currentCardInSet = null;
         placedText.text = "";
         
+        currentPlayerIndex = _players.IndexOf(_lastPlayer); // Sets currentPlayerIndex to the index of _lastPlayer
         _lastPlayer = _players[currentPlayerIndex];
+        
+        nextSetButton.gameObject.SetActive(true);
+        _gameState = GameState.NamingBit;
     }
 
     private void EndRound(Player winner)
     {
         Debug.Log("Round End, " + winner.playerName + " wins!");
+        _gameState = GameState.GameOver;
+        
+        nextSetButton.gameObject.SetActive(false);
+        nextRoundButton.gameObject.SetActive(true);
     }
     
     
     /// <summary>
-    /// Helper for debugging
+    /// Helpers for debugging
     /// </summary>
     /// <returns></returns>
     
@@ -192,10 +236,19 @@ public class GameManager : MonoBehaviour
 
     private void UpdateDebugHandsText()
     {
-        texthand1.text = HandToString(_players[0].hand);
-        texthand2.text = HandToString(_players[1].hand);
-        texthand3.text = HandToString(_players[2].hand);
-        texthand4.text = HandToString(_players[3].hand);
+        TMP_Text[] debugTexts = { texthand1, texthand2, texthand3, texthand4 };
+        
+        for (int i = 0; i < _players.Count; i++)
+        {
+            debugTexts[i].text = HandToString(_players[i].hand);
+
+            if (!_playersActive.Contains(_players[i]))
+                debugTexts[i].color = Color.grey;      // skipped this set
+            else if (_players[i] == _setWinner)
+                debugTexts[i].color = Color.yellow;    // won the previous set
+            else
+                debugTexts[i].color = Color.white;
+        }
     }
 }
 

@@ -26,19 +26,32 @@ public class HandManager : MonoBehaviour
         co._cardData.suit = cardData.suit;
         
         co.cardText.text = co._cardData.rank + " of " +  co._cardData.suit;
-            
-            //Debug.LogWarning("No TMP_Text found on card prefab", go);
 
         cards.Add(co);
         UpdateCardPositions();
     }
 
-    public void RemoveCard(CardObject card)
+    public void RemoveCard(CardData card)
     {
-        if (cards.Remove(card))
-            UpdateCardPositions();
+        CardObject match = cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit);
+        if (!match) return;
+
+        cards.Remove(match);
+        match.transform.DOKill();
+        Destroy(match.gameObject);
+        UpdateCardPositions();
     }
 
+    public void ClearHand()
+    {
+        foreach (CardObject c in cards)
+        {
+            c.transform.DOKill();
+            Destroy(c.gameObject);
+        }
+        cards.Clear();
+    }
+    
     public void UpdateCardPositions()
     {
         int n = cards.Count;
