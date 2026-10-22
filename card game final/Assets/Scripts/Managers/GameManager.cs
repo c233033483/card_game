@@ -160,7 +160,10 @@ public class GameManager : MonoBehaviour
             placedText.text = cardPlayed.rank + " of " + cardPlayed.suit;
             _lastPlayer =  _players[currentPlayerIndex];
             
-            if (currentPlayerIndex == 0)
+            // Update pile
+            Pile.instance.AddCard(cardPlayed);
+            
+            if (currentPlayerIndex == 0) // If it's the human players turn, update the hand
             {
                 handManager.RemoveCard(_currentCardInSet); // Debug for now
             }
