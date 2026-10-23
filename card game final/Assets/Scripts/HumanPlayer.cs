@@ -1,20 +1,17 @@
+using System.Linq;
 using UnityEngine;
 
 public class HumanPlayer : Player
 {
 
-    public override CardData PlayCard(CardData lastPlayed)
+    public override CardData PlayCard()
     {
-        foreach (CardData card in hand) // Sorted low-high
+        foreach (var card in hand.Where(card => Pile.instance.IsCardValid(card)))
         {
-            
-            //Debug.Log(card.rank);
-            if (card.rank > lastPlayed.rank)
-            {
-                hand.Remove(card);
-                return card; // Put down on top of the placed card
-            }
+            hand.Remove(card);
+            return card; // Put down on top of the placed card
         }
+
         return null; // Nothing beats the placed card, pass
     }
 }

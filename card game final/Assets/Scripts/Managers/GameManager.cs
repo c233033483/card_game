@@ -152,7 +152,7 @@ public class GameManager : MonoBehaviour
         
         if (_currentCardInSet == null)
             _currentCardInSet = new CardData();
-        CardData cardPlayed = _players[currentPlayerIndex].PlayCard(_currentCardInSet);
+        CardData cardPlayed = _players[currentPlayerIndex].PlayCard();
 
         if (cardPlayed != null)
         {
@@ -204,6 +204,8 @@ public class GameManager : MonoBehaviour
         _playersActive = new List<Player>(_players);
         _currentCardInSet = null;
         placedText.text = "";
+
+        Pile.instance.ClearPile();
         
         currentPlayerIndex = _players.IndexOf(_lastPlayer); // Sets currentPlayerIndex to the index of _lastPlayer
         _lastPlayer = _players[currentPlayerIndex];

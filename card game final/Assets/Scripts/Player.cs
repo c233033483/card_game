@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,5 +16,5 @@ public abstract class Player
     }
 
 
-    public abstract CardData PlayCard(CardData lastPlayed);
+    public abstract CardData PlayCard(); 
 }

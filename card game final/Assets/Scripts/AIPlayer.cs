@@ -2,13 +2,11 @@ using UnityEngine;
 
 public class AIPlayer : Player
 {
-    public override CardData PlayCard(CardData lastPlayed)
+    public override CardData PlayCard()
     {
         foreach (CardData card in hand) // Sorted low-high
         {
-            
-            //Debug.Log(card.rank);
-            if (card.rank > lastPlayed.rank)
+            if (Pile.instance.IsCardValid(card))
             {
                 hand.Remove(card);
                 return card; // Put down on top of the placed card
