@@ -7,7 +7,6 @@ public class Pile : MonoBehaviour
     
     public CardData TopCard => _topCardData;
 
-    #region Singleton
     public static Pile instance;
 
     void Awake()
@@ -22,11 +21,10 @@ public class Pile : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    #endregion
 
     public void Start()
     {
-        //ClearPile();
+        ClearPile();
     }
     
     public void AddCard(CardData card)
@@ -48,7 +46,6 @@ public class Pile : MonoBehaviour
         _topCardData = null;
         topCard._cardData = null;
 
-        //Debug.Log("Card on top of pile: " + _topCardData.rank + " of " + _topCardData.suit);
         topCard.gameObject.SetActive(false);
     }
 
