@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,6 +16,6 @@ public abstract class Player
         }
     }
 
-
-    public abstract CardData PlayCard(); 
+    // Will call onDecided (callback) when a card is played, or null for a pass
+    public abstract IEnumerator PlayCard(Action<CardData> onDecided);  
 }

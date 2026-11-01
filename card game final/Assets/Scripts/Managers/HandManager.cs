@@ -1,23 +1,32 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Splines;
 
+/// <summary>
+/// Manages the visual representation of the human player's hand
+/// Cards are spawned at the spawnPoint and animated along a spline 
+/// </summary>
 public class HandManager : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private GameObject cardPrefab;
+    [SerializeField] private SplineContainer splineContainer;
+    [SerializeField] private Transform spawnPoint;
+    
+    [Header("Layout")]
     [SerializeField] private int maxCards = 13;
     [SerializeField] private float minSpacing = 0.07f;
     [SerializeField] private float maxSpacing = 0.7f; // total t range allowed (0.7 = 0.15 to 0.85)
     [SerializeField] private float maxTiltDegrees = 60f; // z tilt at t = 0 / 1 (scaled by (0.5 - t) * 2)
     [SerializeField] private float zStep = 0.01f; // small depth offset per card so they layer
+    
+    private readonly List<CardObject> _cards = new List<CardObject>();
 
-    [SerializeField] private GameObject cardPrefab;
-    [SerializeField] private SplineContainer splineContainer;
-    [SerializeField] private Transform spawnPoint;
-
-    private List<CardObject> cards = new List<CardObject>();
-
+    /// <summary>
+    /// Spawns a card using the given data at the spawn point and animates the hand into place
+    /// </summary>
+    /// <param name="cardData">The card to display.</param>
     public void AddCard(CardData cardData)
     {
         GameObject go = Instantiate(cardPrefab, spawnPoint.position, spawnPoint.rotation);
@@ -27,16 +36,23 @@ public class HandManager : MonoBehaviour
         
         co.cardText.text = co._cardData.rank + " of " +  co._cardData.suit;
 
-        cards.Add(co);
+        go.GetComponent<SelectableCard>().Init(cardData);
+        
+        _cards.Add(co);
         UpdateCardPositions();
     }
 
+    /// <summary>
+    /// Removes and destroys the visual card matching the given data, then rejigs the hand
+    /// Does nothing if there is no matching card
+    /// </summary>
+    /// <param name="card">The card to remove.</param>
     public void RemoveCard(CardData card)
     {
-        CardObject match = cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit);
+        CardObject match = _cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit);
         if (!match) return;
 
-        cards.Remove(match);
+        _cards.Remove(match);
         match.transform.DOKill();
         Destroy(match.gameObject);
         UpdateCardPositions();
@@ -44,22 +60,25 @@ public class HandManager : MonoBehaviour
 
     public void ClearHand()
     {
-        foreach (CardObject c in cards)
+        foreach (CardObject c in _cards)
         {
             c.transform.DOKill();
             Destroy(c.gameObject);
         }
-        cards.Clear();
+        _cards.Clear();
     }
     
+    /// <summary>
+    /// Animates each card into its slot along the spline's tangent
+    /// </summary>
     public void UpdateCardPositions()
     {
-        int n = cards.Count;
+        int n = _cards.Count;
         Spline spline = splineContainer.Spline;
 
         for (int i = 0; i < n; i++)
         {
-            Transform c = cards[i].transform;
+            Transform c = _cards[i].transform;
             float t = GetT(i, n);
             
             Vector3 local = spline.EvaluatePosition(t);
@@ -75,9 +94,7 @@ public class HandManager : MonoBehaviour
             c.DORotateQuaternion(rot, 0.25f);
         }
     }
-
-
-
+    
 
     private float GetT(int index, int count)
     {
@@ -88,58 +105,4 @@ public class HandManager : MonoBehaviour
         return 0.5f + offsetFromCenter * spacing;
     }
 }
-
-
-
-
-/*
-private void UpdateCardPositions()
-{
-    if (cards.Count == 0) return;
-
-    float cardSpacing = 1f / maxCards;
-    float firstCardPosition = 0.5f - (cards.Count - 1) * cardSpacing / 2f;
-
-    Spline spline = splineContainer.Spline;
-    for (int i = 0; i < cards.Count; i++)
-    {
-        float pos = firstCardPosition + i * cardSpacing;
-
-        Vector3 localPoint = spline.EvaluatePosition(pos);
-        Vector3 worldPoint = splineContainer.transform.TransformPoint(localPoint);
-
-        // t runs from -1 (leftmost card) to 1 (rightmost card), 0 for a lone card
-        float t = cards.Count > 1 ? (cards.Count - 1) / (float)(maxCards - 1) * 2f - 1f : 0f;
-
-        // negative so the left cards lean left (counterclockwise looking down +Z)
-        Quaternion rotation = Quaternion.Euler(0f, 0f, -t * maxTiltDegrees);
-
-        cards[i].transform.DOMove(worldPoint, 0.25f);
-        cards[i].transform.DORotateQuaternion(rotation, 0.25f);
-    }
-}
-
-
-
-private void UpdateCardPositions()
-{
-    if (cards.Count == 0) return;
-
-    var cardSpacing = 1f / 10f;
-    var firstCardPosition = 0.5f - (cards.Count - 1) * cardSpacing / 2;
-
-    Spline spline = splineContainer.Spline;
-    for (int i = 0; i < cards.Count; i++)
-    {
-        float pos = firstCardPosition + i * cardSpacing;
-        Vector3 splinePosition = spline.EvaluatePosition(pos);
-        Vector3 forward = spline.EvaluateTangent(pos);
-        Vector3 up = spline.EvaluateUpVector(pos);
-        Quaternion rotation = Quaternion.LookRotation(-up, Vector3.Cross(-up, forward).normalized);
-
-        cards[i].transform.DOMove(splinePosition + transform.position + 0.01f * i * Vector3.back, 0.25f);
-        cards[i].transform.DORotate(rotation.eulerAngles, 0.25f);
-
-    }
-}*/
 

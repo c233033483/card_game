@@ -7,7 +7,8 @@
     public enum GameState
     {
         Playing,
-        NamingBit,
+        RoundOver,
+        WaitingForHumanInput,
         GameOver
     }
 
@@ -29,13 +30,12 @@
         private List<Player> _playersActive;
 
         [SerializeField] private float dealTime;
+        [SerializeField] private bool _turnInProgress;
         
         private const int PLAYERS = 4; 
         private int _playersOutIndex; // players who finished their hand in a round
         private int _currentPlayerIndex;
         private Player CurrentPlayer => _players[_currentPlayerIndex];
-
-        public TMP_Text placedText;
         
         public TMP_Text texthand1;
         public TMP_Text texthand2;
@@ -118,7 +118,6 @@
             
             _currentCardInSet = null;
             _setWinner = null;
-            placedText.text = "";
             
             _deck = new Deck();
             _deck.BuildDeck();
@@ -134,32 +133,35 @@
         
         private void StartNextTurn()
         {
-            // 1. Check state
-            if (_gameState != GameState.Playing)
+            // Check state
+            if (_gameState != GameState.Playing || _turnInProgress) return;
+            
+            // If the current player is out, skip their turn
+            if (!IsPlayerActive(CurrentPlayer))
             {
-                Debug.Log("Game state is " +  _gameState);
+                AdvanceTurn();
                 return;
             }
+
+            Debug.Log("Turn Starting for " + CurrentPlayer.playerName);
             
-            // 2. Check if player active
-            if (IsPlayerActive(CurrentPlayer))
-            {
-                Debug.Log("Turn Starting for " + CurrentPlayer.playerName);
+            // Check if current card is null and set card played
+            if (_currentCardInSet == null)
+                _currentCardInSet = new CardData();
+
+            _turnInProgress = true;
+
+            StartCoroutine(CurrentPlayer.PlayCard(OnCardDecided));
+        }
+        
+        private void OnCardDecided(CardData cardPlayed)
+        {
+            _turnInProgress = false;
             
-                // 3. Check if current card is null and set card played
-                if (_currentCardInSet == null)
-                    _currentCardInSet = new CardData();
-                CardData cardPlayed = CurrentPlayer.PlayCard(); // receive the card
-            
-                if (cardPlayed != null)
-                    HandleTurn(cardPlayed);
-                else
-                    HandleSkip();
-            }
+            if (cardPlayed != null)
+                HandleTurn(cardPlayed);
             else
-            {
-                Debug.Log(CurrentPlayer.playerName + " is out of this round");
-            }
+                HandleSkip();
         }
 
         private bool IsPlayerActive(Player player)
@@ -170,7 +172,6 @@
         private void HandleTurn(CardData cardPlayed)
         {
             _currentCardInSet = cardPlayed;
-            placedText.text = cardPlayed.rank + " of " + cardPlayed.suit;
             _lastPlayer =  CurrentPlayer;
                 
             // Update pile
@@ -218,7 +219,6 @@
             _setWinner = _lastPlayer;
             _playersActive = new List<Player>(_players);
             _currentCardInSet = null;
-            placedText.text = "";
 
             Pile.instance.ClearPile();
             
@@ -226,7 +226,7 @@
             _lastPlayer = CurrentPlayer;
             
             nextSetButton.gameObject.SetActive(true);
-            _gameState = GameState.NamingBit;
+            _gameState = GameState.RoundOver;
         }
 
         private void EndRound(Player winner)
