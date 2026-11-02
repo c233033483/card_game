@@ -21,7 +21,13 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float maxTiltDegrees = 60f; // z tilt at t = 0 / 1 (scaled by (0.5 - t) * 2)
     [SerializeField] private float zStep = 0.01f; // small depth offset per card so they layer
     
+    [Header("Card Prefabs")]
+    [Tooltip("0=Clubs,1=Spades,2=Diamonds,3=Hearts")]
+    [SerializeField] private GameObject[] cardPrefabs;  
+    
     private readonly List<CardObject> _cards = new List<CardObject>();
+
+    
 
     /// <summary>
     /// Spawns a card using the given data at the spawn point and animates the hand into place
