@@ -627,8 +627,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42.9
-  m_fontSizeBase: 42.9
+  m_fontSize: 4.7
+  m_fontSizeBase: 4.7
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -921,7 +921,7 @@ Transform:
   m_GameObject: {fileID: 496156035}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.591, z: -2.346}
+  m_LocalPosition: {x: 0, y: 2.65, z: -0.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1310,8 +1310,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42.9
-  m_fontSizeBase: 42.9
+  m_fontSize: 4.7
+  m_fontSizeBase: 4.7
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1860,8 +1860,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42.9
-  m_fontSizeBase: 42.9
+  m_fontSize: 4.7
+  m_fontSizeBase: 4.7
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1965,53 +1965,53 @@ MonoBehaviour:
       TangentIn:
         x: -0
         y: -0
-        z: -0.4142463
+        z: -0.40202612
       TangentOut:
         x: 0
         y: 0
-        z: 0.4142463
+        z: 0.40202612
       Rotation:
         value:
-          x: -0.4357195
-          y: 0.43525547
-          z: -0.49921858
-          w: 0.6094932
+          x: -0.47294152
+          y: 0.53154945
+          z: -0.41254023
+          w: 0.56885153
     - Position:
         x: 0
         y: -1
-        z: 4
+        z: 2.95
       TangentIn:
         x: -0
         y: -0
-        z: -1.3333331
+        z: -1.3334373
       TangentOut:
         x: 0
         y: 0
-        z: 1.3333331
+        z: 1.3334373
       Rotation:
         value:
-          x: -0.36430004
-          y: 0.60604084
-          z: -0.36430004
-          w: 0.60604084
+          x: -0.36238712
+          y: 0.6123112
+          z: -0.35788563
+          w: 0.60470515
     - Position:
         x: 4
         y: -1.4
-        z: 3
+        z: 2.9
       TangentIn:
         x: -0
         y: -0
-        z: -0.4142463
+        z: -0.40202612
       TangentOut:
         x: 0
         y: 0
-        z: 0.4142463
+        z: 0.40202612
       Rotation:
         value:
-          x: 0.10283409
-          y: 0.78110576
-          z: 0.019230874
-          w: 0.6155721
+          x: 0.058967613
+          y: 0.70904255
+          z: -0.011730587
+          w: 0.702598
     m_MetaData:
     - Mode: 0
       Tension: 0.5
@@ -2039,9 +2039,9 @@ Transform:
   m_GameObject: {fileID: 1143228073}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.52, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: -0.01, z: 1.26}
+  m_LocalScale: {x: 0.78, y: 0.78, z: 0.78}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 771945490}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2703,8 +2703,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42.9
-  m_fontSizeBase: 42.9
+  m_fontSize: 4.7
+  m_fontSizeBase: 4.7
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2882,14 +2882,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f231475a14bf6547bc6b95a4d261e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HandManager
+  splineContainer: {fileID: 0}
+  spawnPoint: {fileID: 0}
   maxCards: 13
   minSpacing: 0.07
   maxSpacing: 0.7
   maxTiltDegrees: 60
   zStep: 0.01
-  cardPrefab: {fileID: 0}
-  splineContainer: {fileID: 0}
-  spawnPoint: {fileID: 0}
+  cardPrefabs: []
 --- !u!1 &2004814341
 GameObject:
   m_ObjectHideFlags: 0
@@ -2934,14 +2934,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f231475a14bf6547bc6b95a4d261e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HandManager
+  splineContainer: {fileID: 1143228074}
+  spawnPoint: {fileID: 501330181}
   maxCards: 13
   minSpacing: 0.07
   maxSpacing: 0.5
   maxTiltDegrees: 60
   zStep: 0.01
-  cardPrefab: {fileID: 160393217230103238, guid: d6ef607fe3483ec41a8376a2f41e7105, type: 3}
-  splineContainer: {fileID: 1143228074}
-  spawnPoint: {fileID: 501330181}
+  cardPrefabs:
+  - {fileID: 160393217230103238, guid: 28e3bb5ce5e04c445b4acfe0d2e6b7de, type: 3}
+  - {fileID: 160393217230103238, guid: d6ef607fe3483ec41a8376a2f41e7105, type: 3}
+  - {fileID: 160393217230103238, guid: 824e3d14e39290148a7af96a1d60505b, type: 3}
+  - {fileID: 160393217230103238, guid: 3b8eebc311d7d8843aebb37ca5f85f0a, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

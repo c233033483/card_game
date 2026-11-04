@@ -93,7 +93,7 @@
 
                 if (i % PLAYERS == 0)
                 {
-                    handManager.AddCard(_deck.gameDeck[i]); // Debug for now
+                    handManager.AddCard(_deck.gameDeck[i]);
                 }
                 
                 yield return new WaitForSeconds(dealTime);

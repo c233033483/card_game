@@ -4,9 +4,6 @@ public class Pile : MonoBehaviour
 {
     [SerializeField] private CardObject topCard; 
     private CardData _topCardData; 
-    
-    public CardData TopCard => _topCardData;
-
     public static Pile instance;
 
     void Awake()
@@ -36,9 +33,9 @@ public class Pile : MonoBehaviour
         
         _topCardData = card;
         topCard._cardData = card;
-
-        topCard._cardData = card;
-        topCard.cardText.text = card.rank + " of " +  card.suit;
+        var face = topCard._cardData.FindFace();
+        topCard.UpdateText(face);
+        topCard.UpdateSprite();
     }
 
     public void ClearPile()
