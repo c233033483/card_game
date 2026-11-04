@@ -26,12 +26,6 @@ public class HandManager : MonoBehaviour
 
     private readonly List<CardObject> _cards = new List<CardObject>();
 
-    public void Awake()
-    {
-        Camera.main.transparencySortMode = TransparencySortMode.CustomAxis;
-        Camera.main.transparencySortAxis = new Vector3(0f, 0f, 1f);
-    }
-
     /// <summary>
     /// Spawns a card using the given data at the spawn point and animates the hand into place
     /// </summary>

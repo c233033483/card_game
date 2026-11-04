@@ -43,11 +43,13 @@
         public TMP_Text texthand4;
         public Button nextSetButton;
         public Button nextRoundButton;
+        public Button skipButton;
 
         private void Start()
         {
             nextSetButton.gameObject.SetActive(false);
             nextRoundButton.gameObject.SetActive(true);
+            skipButton.gameObject.SetActive(false);
             
             CreatePlayers();
         }
@@ -142,6 +144,11 @@
                 AdvanceTurn();
                 return;
             }
+
+            if (CurrentPlayer is HumanPlayer)
+                skipButton.gameObject.SetActive(true);
+            else
+                skipButton.gameObject.SetActive(false);
 
             Debug.Log("Turn Starting for " + CurrentPlayer.playerName);
             
@@ -238,7 +245,12 @@
             nextSetButton.gameObject.SetActive(false);
             nextRoundButton.gameObject.SetActive(true);
         }
-        
+
+        public void PlayerSkips()
+        {
+            HandleSkip();
+            skipButton.gameObject.SetActive(false);
+        }
         
         /// <summary>
         /// Helpers for debugging
