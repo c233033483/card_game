@@ -36,11 +36,13 @@
         private int _playersOutIndex; // players who finished their hand in a round
         private int _currentPlayerIndex;
         private Player CurrentPlayer => _players[_currentPlayerIndex];
+        [Header("Automatic Turn")] 
+        private bool _autoTurns;
         
-        public TMP_Text texthand1;
-        public TMP_Text texthand2;
-        public TMP_Text texthand3;
-        public TMP_Text texthand4;
+        [Header("Debug Text/ UI")]
+        [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
+        [SerializeField] private bool showDebugText;
+        
         public Button nextSetButton;
         public Button nextRoundButton;
         public Button skipButton;
@@ -50,6 +52,7 @@
             nextSetButton.gameObject.SetActive(false);
             nextRoundButton.gameObject.SetActive(true);
             skipButton.gameObject.SetActive(false);
+            _autoTurns = false;
             
             CreatePlayers();
         }
@@ -60,8 +63,15 @@
             {
                 StartNextTurn();
             }
+            else if (Input.GetKeyDown(KeyCode.T))
+            {
+                showDebugText = !showDebugText;
+                UpdateDebugHandsText();
+            }
+            
+            if (!_autoTurns && Input.GetKeyDown(KeyCode.Space))
+                StartNextTurn();
         }
-        
 
         private void CreatePlayers()
         {
@@ -130,6 +140,7 @@
         public void StartSet()
         {
             _gameState =  GameState.Playing;
+            TryAutoNextTurn();
             UpdateDebugHandsText();
         }
         
@@ -142,6 +153,7 @@
             if (!IsPlayerActive(CurrentPlayer))
             {
                 AdvanceTurn();
+                TryAutoNextTurn();
                 return;
             }
 
@@ -169,6 +181,8 @@
                 HandleTurn(cardPlayed);
             else
                 HandleSkip();
+
+            TryAutoNextTurn();
         }
 
         private bool IsPlayerActive(Player player)
@@ -248,14 +262,22 @@
 
         public void PlayerSkips()
         {
+            _turnInProgress = false;
             HandleSkip();
+            TryAutoNextTurn();
             skipButton.gameObject.SetActive(false);
         }
-        
+
         /// <summary>
         /// Helpers for debugging
         /// </summary>
         /// <returns></returns>
+
+        private void TryAutoNextTurn()
+        {
+            if (_autoTurns && _gameState == GameState.Playing && !_turnInProgress)
+                StartNextTurn();
+        }
         
         private static string HandToString(List<CardData> cd)
         {
@@ -269,10 +291,11 @@
 
         private void UpdateDebugHandsText()
         {
-            TMP_Text[] debugTexts = { texthand1, texthand2, texthand3, texthand4 };
-            
             for (int i = 0; i < _players.Count; i++)
             {
+                debugTexts[i].gameObject.SetActive(showDebugText);
+                if (!showDebugText) continue;
+                
                 debugTexts[i].text = HandToString(_players[i].hand);
 
                 if (!_playersActive.Contains(_players[i]))
@@ -282,5 +305,11 @@
                 else
                     debugTexts[i].color = Color.white;
             }
+        }
+
+        public void ToggleAutoTurns()
+        {
+            _autoTurns = !_autoTurns;
+            Debug.Log("Auto turns " + _autoTurns);
         }
     }
