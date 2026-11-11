@@ -3,7 +3,7 @@ using UnityEngine;
 public class Pile : MonoBehaviour
 {
     [SerializeField] private CardObject topCard; 
-    private CardData _topCardData; 
+    [SerializeField] private CardData _topCardData; 
     public static Pile instance;
 
     void Awake()

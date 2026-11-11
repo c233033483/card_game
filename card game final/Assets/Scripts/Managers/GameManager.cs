@@ -52,25 +52,20 @@
             nextSetButton.gameObject.SetActive(false);
             nextRoundButton.gameObject.SetActive(true);
             skipButton.gameObject.SetActive(false);
-            _autoTurns = false;
+            _autoTurns = true;
             
             CreatePlayers();
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
+            if (!_autoTurns && Input.GetKeyDown(KeyCode.Space))
                 StartNextTurn();
-            }
             else if (Input.GetKeyDown(KeyCode.T))
             {
                 showDebugText = !showDebugText;
                 UpdateDebugHandsText();
             }
-            
-            if (!_autoTurns && Input.GetKeyDown(KeyCode.Space))
-                StartNextTurn();
         }
 
         private void CreatePlayers()
