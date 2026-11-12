@@ -13,7 +13,6 @@ public class AIPlayer : Player
             if (Pile.instance.IsCardValid(card))
             {
                 onDecided(card); // Put down on top of the placed card
-                hand.Remove(card);
                 yield break;
             }
         }
