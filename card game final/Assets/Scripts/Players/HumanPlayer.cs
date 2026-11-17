@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class HumanPlayer : Player
 {
-    public override IEnumerator PlayCard(Action<CardData> onDecided)
+    public override IEnumerator PlayCard(Move currentPlay, Action<Move> onDecided)
     {
         var input = HumanTurnInput.instance;
         input.Clear();
@@ -16,16 +17,20 @@ public class HumanPlayer : Player
 
             if (input.passClicked)
             {
-                onDecided(null);
+                onDecided(Move.Pass());
                 yield break;
             }
 
-            var card = input.clickedCard;
-            if (hand.Contains(card) && Pile.instance.IsCardValid(card))
+            CardData card = input.clickedCard;
+            var move = new Move(new List<CardData> { card });
+
+            if (hand.Contains(card) && Rules.IsLegal(move, currentPlay))
             {
-                onDecided(card);
+                onDecided(move);
                 yield break;
             }
+
+            input.Clear(); // clear the invalid click and wait for the next one
         }
     }
 }

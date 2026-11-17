@@ -51,15 +51,19 @@ public class HandManager : MonoBehaviour
     /// Removes and destroys the visual card matching the given data, then rejigs the hand
     /// Does nothing if there is no matching card
     /// </summary>
-    /// <param name="card">The card to remove.</param>
-    public void RemoveCard(CardData card)
+    /// <param name="cards">The card(s) to remove.</param>
+    public void RemoveCard(List<CardData> cards)
     {
-        CardObject match = _cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit);
-        if (!match) return;
-
-        _cards.Remove(match);
-        match.transform.DOKill();
-        Destroy(match.gameObject);
+        foreach (var card in cards)
+        {
+            CardObject match = _cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit); 
+            if (!match) continue;
+            
+            _cards.Remove(match);
+            match.transform.DOKill();
+            Destroy(match.gameObject);
+        }
+        
         UpdateCardPositions();
     }
 

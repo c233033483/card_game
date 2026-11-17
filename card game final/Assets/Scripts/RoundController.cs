@@ -17,11 +17,12 @@ public class RoundController
     // turn order, set/ round flow, skips, finish order, title assignments, table state
     //Read-only states
     public GameState State { get; private set; }
-    public CardData CurrentCard { get; private set; }
+    public Move CurrentPlay { get; private set; }
     public IReadOnlyList<Player> FinishOrder => _finishOrder;
     public Player CurrentPlayer => _players[_currentPlayerIndex];
     public Player LastSetWinner {get; private set;}
-    
+    public GameRules Rules { get; } = new GameRules();
+
     private Player _lastPlayer;
 
     //Events
@@ -29,7 +30,7 @@ public class RoundController
     public event Action<Player> OnRoundOver;
     public event Action<Player> OnPlayerPass;
     public event Action<Player> OnTurnChange;
-    public event Action<Player, CardData> OnCardsPlayed;
+    public event Action<Player, Move> OnCardsPlayed;
     public event Action<Player, int> OnPlayerOut; // player, place (1 = first out)
 
     //Private data
@@ -62,22 +63,28 @@ public class RoundController
     public void SetStart()
     {
         _passed.Clear();
-        CurrentCard = null;
+        CurrentPlay = null;
         
         State = GameState.Playing;
         OnTurnChange?.Invoke(CurrentPlayer);
     }
 
-    public bool PlayCard(CardData cardPlayed)
+    public bool PlayMove(Move move)
     {      
+        // Check if false
         if (State != GameState.Playing) return false;
-        var p = CurrentPlayer;
-        if (!p.hand.Contains(cardPlayed) || !IsLegal(cardPlayed)) return false;
+        if (move == null || move.IsPass || !Rules.IsLegal(move, CurrentPlay)) return false;
 
-        p.hand.Remove(cardPlayed);
-        CurrentCard = cardPlayed;
+        var p = CurrentPlayer;
+        foreach (var c in move.Cards)
+            if (!p.hand.Contains(c)) return false;
+
+        foreach (var c in move.Cards)
+            p.hand.Remove(c);
+        
+        CurrentPlay = move;
         _lastPlayer = p;
-        OnCardsPlayed?.Invoke(p, cardPlayed);
+        OnCardsPlayed?.Invoke(p, move);
         
         if (p.hand.Count == 0) 
         {
@@ -91,7 +98,7 @@ public class RoundController
 
     public bool Pass()
     {
-        if (State != GameState.Playing || CurrentCard == null) return false;
+        if (State != GameState.Playing || CurrentPlay == null) return false;
         
         _passed.Add(CurrentPlayer);
         OnPlayerPass?.Invoke(CurrentPlayer);
@@ -129,7 +136,7 @@ public class RoundController
     private void EndSet()
     {
         Player winner = _lastPlayer;
-        CurrentCard = null;
+        CurrentPlay = null;
         LastSetWinner = winner;
         
         // Sets currentPlayerIndex to the index of the winner
@@ -168,10 +175,5 @@ public class RoundController
             if (p.hand.Count > 0 && !_passed.Contains(p)) return false;
         }
         return true;
-    }
-    
-    private bool IsLegal(CardData card)
-    {
-        return CurrentCard == null || card.rank > CurrentCard.rank;
     }
 }
