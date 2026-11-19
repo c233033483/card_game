@@ -1,11 +1,18 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class ClicktoFocus : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private Camera cam;
-    [SerializeField] private GameObject[] uiToHide;
+
+  
+    [SerializeField] private GameObject[] toDisable;
+
+  
+    [SerializeField] private GameObject[] toEnable;
+
     [SerializeField] private float focusDistance = 5f;
     [SerializeField] private float heightOffset = 1f;
     [SerializeField] private float moveDuration = 1.25f;
@@ -16,11 +23,6 @@ public class ClicktoFocus : MonoBehaviour
     private Vector3 originalPosition;
     private Quaternion originalRotation;
 
-    private void Awake()
-    {
-        if (cam == null) cam = Camera.main;
-    }
-
     public void ToggleFocus()
     {
         if (isFocused) ReturnToOriginal();
@@ -29,12 +31,16 @@ public class ClicktoFocus : MonoBehaviour
 
     private void FocusOnTarget()
     {
-        if (target == null || cam == null) return;
+        // Only save the original pose if we're not mid-move,
+        // otherwise we'd save a halfway position.
+        if (routine == null)
+        {
+            originalPosition = cam.transform.position;
+            originalRotation = cam.transform.rotation;
+        }
 
-        originalPosition = cam.transform.position;
-        originalRotation = cam.transform.rotation;
-
-        SetUIActive(false);
+        SetActive(toDisable, false);
+        SetActive(toEnable, true);
 
         Vector3 lookPoint = target.position + Vector3.up * heightOffset;
         Vector3 direction = (cam.transform.position - lookPoint).normalized;
@@ -50,14 +56,16 @@ public class ClicktoFocus : MonoBehaviour
     private void ReturnToOriginal()
     {
         isFocused = false;
-        StartMove(originalPosition, originalRotation, () => SetUIActive(true));
+
+        SetActive(toEnable, false);
+        StartMove(originalPosition, originalRotation, () => SetActive(toDisable, true));
     }
 
-    private void SetUIActive(bool active)
+    private void SetActive(GameObject[] objects, bool active)
     {
-        foreach (GameObject ui in uiToHide)
+        foreach (GameObject go in objects)
         {
-            if (ui != null) ui.SetActive(active);
+            go.SetActive(active);
         }
     }
 
