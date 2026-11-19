@@ -442,7 +442,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2344848453709351562, guid: d6ef607fe3483ec41a8376a2f41e7105, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1040,7 +1041,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2344848453709351562, guid: d6ef607fe3483ec41a8376a2f41e7105, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1109,7 +1111,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2344848453709351562, guid: d6ef607fe3483ec41a8376a2f41e7105, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1868,6 +1871,7 @@ MonoBehaviour:
   handManager: {fileID: 2004814343}
   dealTime: 0
   turnInProgress: 0
+  cardPlayDuration: 0.5
   debugTexts:
   - {fileID: 345494914}
   - {fileID: 800620417}
@@ -1876,7 +1880,7 @@ MonoBehaviour:
   showDebugText: 0
   nextSetButton: {fileID: 14056160}
   nextRoundButton: {fileID: 326917755}
-  skipButton: {fileID: 1170952453}
+  passButton: {fileID: 1170952453}
 --- !u!1 &993063270
 GameObject:
   m_ObjectHideFlags: 0
@@ -2543,7 +2547,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 973526294}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: PlayerSkips
+        m_MethodName: PlayerPasses
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

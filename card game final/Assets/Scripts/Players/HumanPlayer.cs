@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class HumanPlayer : Player
 {
-    public override IEnumerator PlayCard(Move currentPlay, Action<Move> onDecided)
+    public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
         var input = HumanTurnInput.Instance;
         input.Clear();
@@ -24,7 +24,8 @@ public class HumanPlayer : Player
             CardData card = input.clickedCard;
             var move = new Move(new List<CardData> { card });
 
-            if (hand.Contains(card) && Rules.IsLegal(move, currentPlay))
+            bool legal = mustMatch ? Rules.IsSkip(move, currentPlay) : Rules.IsLegal(move, currentPlay);
+            if (hand.Contains(card) && legal)
             {
                 onDecided(move);
                 yield break;

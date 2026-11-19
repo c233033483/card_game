@@ -19,5 +19,5 @@ public abstract class Player
     }
 
     // Will call onDecided (callback) when a card is played, or null for a pass
-    public abstract IEnumerator PlayCard(Move currentPlay, Action<Move> onDecided);  
+    public abstract IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided);  
 }

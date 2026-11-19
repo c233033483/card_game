@@ -24,19 +24,20 @@ public class GameManager : MonoBehaviour
     private Coroutine _turnRoutine;
     
     private bool _autoTurns;
+    private bool _gettingSkipped;
 
     [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
     [SerializeField] private bool showDebugText;
 
     public Button nextSetButton;
     public Button nextRoundButton;
-    public Button skipButton;
+    public Button passButton;
 
     private void Start()
     {
         nextSetButton.gameObject.SetActive(false);
         nextRoundButton.gameObject.SetActive(true);
-        skipButton.gameObject.SetActive(false);
+        passButton.gameObject.SetActive(false);
         _autoTurns = true;
         
         CreatePlayers();
@@ -47,6 +48,7 @@ public class GameManager : MonoBehaviour
         _round.OnRoundOver += OnRoundEnded;
         _round.OnTurnChange += _ => UpdateDebugHandsText();
         _round.OnPlayerPass += _ => UpdateDebugHandsText();
+        _round.OnPlayerSkipped += _ => UpdateDebugHandsText();
     }
 
     private void Update()
@@ -133,10 +135,10 @@ public class GameManager : MonoBehaviour
         if (_round.State != GameState.Playing || turnInProgress) return;
 
         Player p = _round.CurrentPlayer;
-        skipButton.gameObject.SetActive(p is HumanPlayer);
+        passButton.gameObject.SetActive(p is HumanPlayer);
         turnInProgress = true;
 
-        _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, OnCardDecided));
+        _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, _round.MustMatch, OnCardDecided));
     }
 
     private void OnCardDecided(Move move)
@@ -158,7 +160,7 @@ public class GameManager : MonoBehaviour
         if (p is HumanPlayer) handManager.RemoveCard(move.Cards, cardPlayDuration);
     }
 
-    public void PlayerSkips()
+    public void PlayerPasses()
     {
         if (!_round.Pass()) return; // ignored if the human is leading
         
@@ -170,7 +172,7 @@ public class GameManager : MonoBehaviour
         
         turnInProgress = false;
         TryAutoNextTurn();
-        skipButton.gameObject.SetActive(false);
+        passButton.gameObject.SetActive(false);
     }
 
     private void OnSetEnded(Player winner)

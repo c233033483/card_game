@@ -33,6 +33,9 @@ public class RoundController
     public GameRules Rules { get; } = new GameRules();
 
     private Player _lastPlayer;
+    
+    private bool _nextPlayerSkipped;
+    public bool MustMatch => _nextPlayerSkipped;
 
     //Events
     public event Action<Player> OnSetOver;
@@ -42,7 +45,8 @@ public class RoundController
     public event Action<Player, Move> OnCardsPlayed;
     public event Action<Player, int> OnPlayerOut; // player, place (1 = first out)
     public event Action<List<Player>> OnTitlesAssigned;
-
+    public event Action<Player> OnPlayerSkipped;
+    
     //Private data
     private readonly List<Player> _players;
     private readonly HashSet<Player> _passed =  new HashSet<Player>();
@@ -65,6 +69,7 @@ public class RoundController
     {
         _finishOrder.Clear();
         _lastPlayer = null;
+        _nextPlayerSkipped = false;
         
         SetStart();
     }
@@ -88,10 +93,14 @@ public class RoundController
         foreach (var c in move.Cards)
             if (!p.hand.Contains(c)) return false;
 
+        bool isSkip = Rules.IsSkip(move, CurrentPlay);
+        if (_nextPlayerSkipped && !isSkip) return false; // when being skipped you can only match
+        
         foreach (var c in move.Cards)
             p.hand.Remove(c);
         
         CurrentPlay = move;
+        _nextPlayerSkipped = isSkip;
         _lastPlayer = p;
         OnCardsPlayed?.Invoke(p, move);
         
@@ -108,6 +117,15 @@ public class RoundController
     public bool Pass()
     {
         if (State != GameState.Playing || CurrentPlay == null) return false;
+        
+        if (_nextPlayerSkipped)
+        {
+            // declining a skip just loses the turn, they are not out for the set
+            _nextPlayerSkipped = false;
+            OnPlayerSkipped?.Invoke(CurrentPlayer);
+            AfterTurn();
+            return true;
+        }
         
         _passed.Add(CurrentPlayer);
         OnPlayerPass?.Invoke(CurrentPlayer);
@@ -133,13 +151,33 @@ public class RoundController
 
     private void AdvanceTurn()
     {
+        FindNextPlayer();
+        
+        // if a skipped player can't match, they lose the turn automatically
+        while (_nextPlayerSkipped && !Rules.IsMatch(CurrentPlayer.hand, CurrentPlay))
+        {
+            _nextPlayerSkipped = false;
+            OnPlayerSkipped?.Invoke(CurrentPlayer);
+            FindNextPlayer();
+        }
+        
+        // checks if the skips carried the turn all the way back to the last player, nobody could beat them so turn over
+        if (CurrentPlayer == _lastPlayer)
+        {
+            EndSet();
+            return;
+        }   
+        
+        OnTurnChange?.Invoke(CurrentPlayer);
+    }
+
+    private void FindNextPlayer()
+    {
         do
         {
             _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
         }
         while (CurrentPlayer.hand.Count == 0 || _passed.Contains(CurrentPlayer)); 
-
-        OnTurnChange?.Invoke(CurrentPlayer);
     }
 
     private void EndSet()

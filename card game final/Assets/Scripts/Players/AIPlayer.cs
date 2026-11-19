@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AIPlayer : Player
 {
-    public override IEnumerator PlayCard(Move currentPlay, Action<Move> onDecided)
+    public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
         yield return new WaitForSeconds(0.5f);
         
@@ -18,8 +18,8 @@ public class AIPlayer : Player
             
             var move = new Move(hand.GetRange(i, size));
             
-            // Just picks the lowest legal move, will be moved to a strategy class later
-            if (Rules.IsLegal(move, currentPlay))
+            bool legal = mustMatch ? Rules.IsSkip(move, currentPlay) : Rules.IsLegal(move, currentPlay);
+            if (legal)
             {
                 onDecided(move);
                 yield break;
