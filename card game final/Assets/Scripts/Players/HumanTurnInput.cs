@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class HumanTurnInput : MonoBehaviour
 {
-    public static HumanTurnInput instance;
-    private void Awake() { instance = this; }
+    public static HumanTurnInput Instance;
+    private void Awake() { Instance = this; }
     
     public CardData clickedCard;
     public bool passClicked;
@@ -11,6 +11,7 @@ public class HumanTurnInput : MonoBehaviour
     public void CardClicked(CardData card)
     {
         clickedCard = card;
+        Debug.Log("Card clicked");
     }  // called by card UI
 
     public void PassClicked()

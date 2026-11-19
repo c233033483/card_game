@@ -6,6 +6,7 @@ using UnityEngine;
 public abstract class Player
 {
     public string playerName;
+    public Titles title;
     public List<CardData> hand = new List<CardData>();
     public GameRules Rules { get; } = new GameRules();
 

@@ -1,11 +1,20 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public enum GameState
 {
     Playing,
     SetOver,
     RoundOver,
+}
+
+public enum Titles
+{
+    President = 0,
+    VicePresident = 1,
+    ViceAsshole = 2,
+    Asshole = 3
 }
 
 /// <summary>
@@ -32,13 +41,13 @@ public class RoundController
     public event Action<Player> OnTurnChange;
     public event Action<Player, Move> OnCardsPlayed;
     public event Action<Player, int> OnPlayerOut; // player, place (1 = first out)
+    public event Action<List<Player>> OnTitlesAssigned;
 
     //Private data
     private readonly List<Player> _players;
     private readonly HashSet<Player> _passed =  new HashSet<Player>();
     private List<Player> _finishOrder = new List<Player>();
     
-    private const int PLAYERS = 4;
     private int _currentPlayerIndex;
 
     private bool _turnInProgress;
@@ -158,8 +167,26 @@ public class RoundController
         State = GameState.RoundOver;
         OnRoundOver?.Invoke(_finishOrder[0]);
         
-        // assign titles
+        AssignTitles();
     }
+
+    /// <summary>
+    ///  1st: President
+    ///  2nd: Vice President
+    ///  3rd: Vice Asshole
+    ///  4th: Asshole
+    /// </summary>
+    private void AssignTitles()
+    {
+        for (int i = 0; i < _finishOrder.Count; i++)
+        {
+            _finishOrder[i].title = (Titles)i;
+            Debug.Log(_finishOrder[i].playerName + " is the " + (Titles)i);
+        }
+        
+        OnTitlesAssigned?.Invoke(_finishOrder);
+    }
+    
 
     /// <summary>
     /// Helpers for debugging

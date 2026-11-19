@@ -3585,6 +3585,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HandManager
   splineContainer: {fileID: 0}
   spawnPoint: {fileID: 0}
+  playPoint: {fileID: 0}
   maxCards: 13
   minSpacing: 0.07
   maxSpacing: 0.7
@@ -3637,6 +3638,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HandManager
   splineContainer: {fileID: 1143228074}
   spawnPoint: {fileID: 501330181}
+  playPoint: {fileID: 367988265}
   maxCards: 13
   minSpacing: 0.07
   maxSpacing: 0.5

@@ -12,6 +12,6 @@ public class SelectableCard : MonoBehaviour
 
     private void OnMouseDown()
     {
-        HumanTurnInput.instance.CardClicked(data);
+        HumanTurnInput.Instance.CardClicked(data);
     }
 }

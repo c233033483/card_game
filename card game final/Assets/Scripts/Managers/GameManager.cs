@@ -18,10 +18,11 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private float dealTime;
     [SerializeField] private bool turnInProgress;
+    [SerializeField] private float cardPlayDuration = 0.5f;
 
-    private const int PLAYERS = 4; 
-
-    [Header("Debug / UI")]
+    private const int PLAYERS = 4;
+    private Coroutine _turnRoutine;
+    
     private bool _autoTurns;
 
     [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
@@ -135,11 +136,12 @@ public class GameManager : MonoBehaviour
         skipButton.gameObject.SetActive(p is HumanPlayer);
         turnInProgress = true;
 
-        StartCoroutine(p.PlayCard(_round.CurrentPlay, OnCardDecided));
+        _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, OnCardDecided));
     }
 
     private void OnCardDecided(Move move)
     {
+        _turnRoutine = null;
         turnInProgress = false;
 
         if (!move.IsPass)
@@ -152,13 +154,19 @@ public class GameManager : MonoBehaviour
 
     private void OnCardPlayed(Player p, Move move)
     {
-        Pile.instance.AddCard(move);
-        if (p is HumanPlayer) handManager.RemoveCard(move.Cards);
+        Pile.instance.AddCard(move, cardPlayDuration);
+        if (p is HumanPlayer) handManager.RemoveCard(move.Cards, cardPlayDuration);
     }
 
     public void PlayerSkips()
     {
         if (!_round.Pass()) return; // ignored if the human is leading
+        
+        if (_turnRoutine != null)
+        {
+            StopCoroutine(_turnRoutine);
+            _turnRoutine = null;
+        }
         
         turnInProgress = false;
         TryAutoNextTurn();

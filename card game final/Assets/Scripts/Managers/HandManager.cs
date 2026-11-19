@@ -13,6 +13,7 @@ public class HandManager : MonoBehaviour
     private SplineContainer splineContainer;
 
     [SerializeField] private Transform spawnPoint;
+    [SerializeField] private Transform playPoint;
 
     [Header("Layout")] [SerializeField] private int maxCards = 13;
     [SerializeField] private float minSpacing = 0.07f;
@@ -52,7 +53,7 @@ public class HandManager : MonoBehaviour
     /// Does nothing if there is no matching card
     /// </summary>
     /// <param name="cards">The card(s) to remove.</param>
-    public void RemoveCard(List<CardData> cards)
+    public void RemoveCard(List<CardData> cards, float delay)
     {
         foreach (var card in cards)
         {
@@ -60,13 +61,31 @@ public class HandManager : MonoBehaviour
             if (!match) continue;
             
             _cards.Remove(match);
-            match.transform.DOKill();
-            Destroy(match.gameObject);
+            MoveToPlay(match, delay);
         }
         
         UpdateCardPositions();
     }
 
+    private void MoveToPlay(CardObject co, float delay)
+    {
+        GameObject go = co.gameObject;
+        Transform t = co.transform;
+
+        // stop it being clickable while it flies
+        var selectable = go.GetComponent<SelectableCard>();
+        if (selectable) selectable.enabled = false;
+        foreach (var col in go.GetComponentsInChildren<Collider2D>()) col.enabled = false;
+
+        t.DOKill();
+
+        Sequence seq = DOTween.Sequence();
+        seq.Join(t.DOMove(playPoint.position, delay).SetEase(Ease.OutQuad));
+        seq.Join(t.DORotateQuaternion(playPoint.rotation, delay));
+        seq.SetLink(go); // kills the tween if the object is destroyed early
+        seq.OnComplete(() => Destroy(go));
+    }
+    
     public void ClearHand()
     {
         foreach (CardObject c in _cards)

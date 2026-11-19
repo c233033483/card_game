@@ -8,7 +8,7 @@ public class HumanPlayer : Player
 {
     public override IEnumerator PlayCard(Move currentPlay, Action<Move> onDecided)
     {
-        var input = HumanTurnInput.instance;
+        var input = HumanTurnInput.Instance;
         input.Clear();
         
         while (true)
