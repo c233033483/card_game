@@ -1,9 +1,9 @@
-
-
 using System.Collections.Generic;
 
 public class GameRules
 {
+    public const int MAX_CARDS_IN_MOVE = 3;
+    
     
     /// <summary>
     /// Returns whether or not the card(s) supplied are a legal move.
@@ -15,6 +15,7 @@ public class GameRules
     public bool IsLegal(Move move, Move currentlyDown)
     {
         if (move == null || move.IsPass) return true;
+        if (move.Count > MAX_CARDS_IN_MOVE) return false;
         
         foreach (var c in move.Cards)
             if (c.rank != move.Rank) return false;  // make sure they're all same rank, if not, not legal
@@ -37,6 +38,7 @@ public class GameRules
     public bool IsSkip(Move move, Move currentlyDown)
     {
         if (move == null || move.IsPass) return false;
+        if (move.Count > MAX_CARDS_IN_MOVE) return false;
         if (currentlyDown == null || currentlyDown.IsPass) return false;
         if (move.Count != currentlyDown.Count) return false;
 

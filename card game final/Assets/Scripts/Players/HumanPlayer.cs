@@ -13,20 +13,28 @@ public class HumanPlayer : Player
         
         while (true)
         {
-            yield return new WaitUntil(() => input.clickedCard != null || input.passClicked);
+            yield return new WaitUntil(() => input.playClicked || input.passClicked);
 
             if (input.passClicked)
             {
+                input.Clear();
+                input.ClearSelection();
+                
                 onDecided(Move.Pass());
                 yield break;
             }
 
-            CardData card = input.clickedCard;
-            var move = new Move(new List<CardData> { card });
-
+            input.playClicked = false;
+            if (input.Selected.Count == 0) continue;
+            
+            var move = new Move(new List<CardData>(input.Selected));
+            var inHand = move.Cards.TrueForAll(c => hand.Contains(c));
             bool legal = mustMatch ? Rules.IsSkip(move, currentPlay) : Rules.IsLegal(move, currentPlay);
-            if (hand.Contains(card) && legal)
+            
+            if (inHand && legal)
             {
+                input.ClearSelection();
+                
                 onDecided(move);
                 yield break;
             }

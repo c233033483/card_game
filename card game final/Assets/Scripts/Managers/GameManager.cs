@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
     public Button nextSetButton;
     public Button nextRoundButton;
     public Button passButton;
+    public Button playButton;
 
     private void Start()
     {
@@ -136,6 +137,7 @@ public class GameManager : MonoBehaviour
 
         Player p = _round.CurrentPlayer;
         passButton.gameObject.SetActive(p is HumanPlayer);
+        playButton.gameObject.SetActive(p is HumanPlayer);
         turnInProgress = true;
 
         _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, _round.MustMatch, OnCardDecided));
@@ -143,6 +145,9 @@ public class GameManager : MonoBehaviour
 
     private void OnCardDecided(Move move)
     {
+        playButton.gameObject.SetActive(false);
+        passButton.gameObject.SetActive(false);
+        
         _turnRoutine = null;
         turnInProgress = false;
 
@@ -173,6 +178,7 @@ public class GameManager : MonoBehaviour
         turnInProgress = false;
         TryAutoNextTurn();
         passButton.gameObject.SetActive(false);
+        playButton.gameObject.SetActive(false);
     }
 
     private void OnSetEnded(Player winner)

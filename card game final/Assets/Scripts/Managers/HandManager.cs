@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -15,17 +16,31 @@ public class HandManager : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private Transform playPoint;
 
-    [Header("Layout")] [SerializeField] private int maxCards = 13;
+    [Header("Layout")] 
+    [SerializeField] private int maxCards = 13;
     [SerializeField] private float minSpacing = 0.07f;
     [SerializeField] private float maxSpacing = 0.7f; // total t range allowed (0.7 = 0.15 to 0.85)
     [SerializeField] private float maxTiltDegrees = 60f; // z tilt at t = 0 / 1 (scaled by (0.5 - t) * 2)
     [SerializeField] private float zStep = 0.01f; // small depth offset per card so they layer
 
-    [Header("Card Prefabs")] [Tooltip("0=Clubs,1=Spades,2=Diamonds,3=Hearts")] 
-    [SerializeField]
-    private GameObject[] cardPrefabs;
+    [Header("Card Prefabs")] 
+    [Tooltip("0=Clubs,1=Spades,2=Diamonds,3=Hearts")] 
+    [SerializeField] private GameObject[] cardPrefabs;
+    [SerializeField] private float selectLift = 0.3f;
 
     private readonly List<CardObject> _cards = new List<CardObject>();
+
+    private void Start()
+    {
+        HumanTurnInput.Instance.OnSelectionChanged += UpdateCardPositions;
+    }
+
+    private void OnDestroy()
+    {
+        if (HumanTurnInput.Instance != null)
+            HumanTurnInput.Instance.OnSelectionChanged -= UpdateCardPositions;
+    }
+    
 
     /// <summary>
     /// Spawns a card using the given data at the spawn point and animates the hand into place
@@ -114,6 +129,9 @@ public class HandManager : MonoBehaviour
             Vector3 worldPos = splineContainer.transform.TransformPoint(local);
             worldPos += Vector3.back * (zStep * i);
 
+            if (HumanTurnInput.Instance.IsSelected(_cards[i]._cardData))
+                worldPos += Vector3.up * selectLift;
+            
             Vector3 tangent = splineContainer.transform.TransformDirection(spline.EvaluateTangent(t));
             float angle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
             Quaternion rot = Quaternion.Euler(0f, 0f, angle);
