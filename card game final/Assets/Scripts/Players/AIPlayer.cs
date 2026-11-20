@@ -7,7 +7,7 @@ public class AIPlayer : Player
 {
     public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.5f);
         
         onDecided(ChooseMove(currentPlay, mustMatch));
     }

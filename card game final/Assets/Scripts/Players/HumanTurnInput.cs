@@ -15,11 +15,15 @@ public class HumanTurnInput : MonoBehaviour
     public bool passClicked;
     
     public bool IsSelected(CardData card) => _selected.Contains(card);
+    public bool SelectionEnabled { get; private set; }
 
     public event Action OnSelectionChanged; // HandManager subscribes to lift/lower cards
+    public event Action<string> OnInvalidPlay;
 
     public void CardClicked(CardData card)
     {
+        if (!SelectionEnabled) return;
+        
         if (!_selected.Remove(card))
         {
             if (_selected.Count >= GameRules.MAX_CARDS_IN_MOVE) return; // can't select more than a move allows
@@ -28,13 +32,17 @@ public class HumanTurnInput : MonoBehaviour
         OnSelectionChanged?.Invoke();
     }  // called by card UI
 
-    public void PlayClicked()
-    {
-        Debug.Log("PlayClicked called\n" + System.Environment.StackTrace);
-        playClicked = true;
-    } // called by play button 
+    public void PlayClicked() { playClicked = true; } // called by play button 
     public void PassClicked() { passClicked = true; } // called by pass button
 
+    public void InvalidPlay(string msg) { OnInvalidPlay?.Invoke(msg); }
+    
+    public void SetSelectionEnabled(bool on)
+    {
+        SelectionEnabled = on;
+        if (!on) ClearSelection();
+    }
+    
     public void Clear()
     {
         playClicked = false;
