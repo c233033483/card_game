@@ -1,315 +1,240 @@
-    using System.Collections;
-    using System.Collections.Generic;
-    using TMPro;
-    using UnityEngine;
-    using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
-    public enum GameState
+/// <summary>
+/// 25/09/26 For Managing turns in rounds, ends of sets, games. Setting places.
+/// </summary>
+public class GameManager : MonoBehaviour
+{
+    public HandManager handManager;
+    private Deck _deck;
+    private RoundController _round;
+
+    private readonly List<Player> _players = new List<Player>();
+    private List<Player> _playersActive;
+
+    [SerializeField] private float dealTime;
+    [SerializeField] private bool turnInProgress;
+    [SerializeField] private float cardPlayDuration = 0.5f;
+
+    private const int PLAYERS = 4;
+    private Coroutine _turnRoutine;
+    
+    private bool _autoTurns;
+    private bool _gettingSkipped;
+
+    [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
+    [SerializeField] private bool showDebugText;
+
+    public Button nextSetButton;
+    public Button nextRoundButton;
+    public Button passButton;
+
+    private void Start()
     {
-        Playing,
-        RoundOver,
-        WaitingForHumanInput,
-        GameOver
+        nextSetButton.gameObject.SetActive(false);
+        nextRoundButton.gameObject.SetActive(true);
+        passButton.gameObject.SetActive(false);
+        _autoTurns = true;
+        
+        CreatePlayers();
+        
+        _round = new RoundController(_players);
+        _round.OnCardsPlayed += OnCardPlayed;
+        _round.OnSetOver += OnSetEnded;
+        _round.OnRoundOver += OnRoundEnded;
+        _round.OnTurnChange += _ => UpdateDebugHandsText();
+        _round.OnPlayerPass += _ => UpdateDebugHandsText();
+        _round.OnPlayerSkipped += _ => UpdateDebugHandsText();
+    }
+
+    private void Update()
+    {
+        if (!_autoTurns && Input.GetKeyDown(KeyCode.Space))
+            StartNextTurn();
+        else if (Input.GetKeyDown(KeyCode.T))
+        {
+            showDebugText = !showDebugText;
+            UpdateDebugHandsText();
+        }
+    }
+
+    private void CreatePlayers()
+    {
+        for (int i = 0; i < PLAYERS; i++)
+        {
+            Player p;
+            if (i == 0) p = new HumanPlayer();
+            else p = new AIPlayer();
+            string playerName = "Player " + (i + 1);
+            p.playerName = playerName;
+            
+            _players.Add(p);
+        }
+    }
+
+    private void Deal()
+    {
+        foreach (Player p in _players)
+        {
+            p.hand.Clear();
+        }
+        
+        StartCoroutine(DealAll());
+    }
+
+    IEnumerator DealAll()
+    {
+        for (int i = 0; i < _deck.gameDeck.Count; i++)
+        {
+            _players[i % PLAYERS].hand.Add(_deck.gameDeck[i]);
+
+            if (i % PLAYERS == 0)
+            {
+                handManager.AddCard(_deck.gameDeck[i]);
+            }
+            
+            yield return new WaitForSeconds(dealTime);
+        }
+        
+        foreach (Player p in _players)
+        {
+            p.SortHand();
+        }
+        
+        _round.RoundStart();
+        UpdateDebugHandsText();
+        TryAutoNextTurn();
+    }
+
+    public void StartRound()
+    {
+        nextRoundButton.gameObject.SetActive(false);
+        nextSetButton.gameObject.SetActive(false);
+        
+        handManager.ClearHand();
+        
+        _deck = new Deck();
+        _deck.BuildDeck();
+        _deck.RandomiseDeck();
+        Deal();
+    }
+
+    public void StartSet()
+    {
+        nextSetButton.gameObject.SetActive(false);
+        _round.SetStart();
+        TryAutoNextTurn();
+    }
+
+    private void StartNextTurn()
+    {
+        if (_round.State != GameState.Playing || turnInProgress) return;
+
+        Player p = _round.CurrentPlayer;
+        passButton.gameObject.SetActive(p is HumanPlayer);
+        turnInProgress = true;
+
+        _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, _round.MustMatch, OnCardDecided));
+    }
+
+    private void OnCardDecided(Move move)
+    {
+        _turnRoutine = null;
+        turnInProgress = false;
+
+        if (!move.IsPass)
+            _round.PlayMove(move);
+        else
+            _round.Pass();
+
+        TryAutoNextTurn();
+    }
+
+    private void OnCardPlayed(Player p, Move move)
+    {
+        Pile.instance.AddCard(move, cardPlayDuration);
+        if (p is HumanPlayer) handManager.RemoveCard(move.Cards, cardPlayDuration);
+    }
+
+    public void PlayerPasses()
+    {
+        if (!_round.Pass()) return; // ignored if the human is leading
+        
+        if (_turnRoutine != null)
+        {
+            StopCoroutine(_turnRoutine);
+            _turnRoutine = null;
+        }
+        
+        turnInProgress = false;
+        TryAutoNextTurn();
+        passButton.gameObject.SetActive(false);
+    }
+
+    private void OnSetEnded(Player winner)
+    {
+        Debug.Log("Set Over, " +  winner.playerName + " wins!");
+        
+        Pile.instance.ClearPile();
+        nextSetButton.gameObject.SetActive(true);
+        UpdateDebugHandsText();
+    }
+
+    private void OnRoundEnded(Player winner)
+    {
+        Debug.Log("Round End, " + winner.playerName + " wins!");
+        
+        Pile.instance.ClearPile();
+        nextSetButton.gameObject.SetActive(false);
+        nextRoundButton.gameObject.SetActive(true);        
     }
 
     /// <summary>
-    /// 25/09/26 For Managing turns in rounds, ends of sets, games. Setting places.
+    /// Helpers for debugging
     /// </summary>
-    public class GameManager : MonoBehaviour
+    /// <returns></returns>
+
+    private void TryAutoNextTurn()
     {
-        public HandManager handManager;
+        if (_autoTurns && !turnInProgress)
+            StartNextTurn();
+    }
 
-        private Deck _deck;
-        private GameState _gameState;
-        
-        private CardData _currentCardInSet;
-        private Player _lastPlayer;
-        private Player _setWinner;
-        
-        private readonly List<Player> _players = new List<Player>();
-        private List<Player> _playersActive;
-
-        [SerializeField] private float dealTime;
-        [SerializeField] private bool _turnInProgress;
-        
-        private const int PLAYERS = 4; 
-        private int _playersOutIndex; // players who finished their hand in a round
-        private int _currentPlayerIndex;
-        private Player CurrentPlayer => _players[_currentPlayerIndex];
-        [Header("Automatic Turn")] 
-        private bool _autoTurns;
-        
-        [Header("Debug Text/ UI")]
-        [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
-        [SerializeField] private bool showDebugText;
-        
-        public Button nextSetButton;
-        public Button nextRoundButton;
-        public Button skipButton;
-
-        private void Start()
+    private static string HandToString(List<CardData> cd)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (CardData card in cd)
         {
-            nextSetButton.gameObject.SetActive(false);
-            nextRoundButton.gameObject.SetActive(true);
-            skipButton.gameObject.SetActive(false);
-            _autoTurns = false;
-            
-            CreatePlayers();
+            sb.AppendLine(card.rank + " of " + card.suit);
         }
+        return sb.ToString();
+    }
 
-        private void Update()
+    private void UpdateDebugHandsText()
+    {
+        for (int i = 0; i < _players.Count; i++)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                StartNextTurn();
-            }
-            else if (Input.GetKeyDown(KeyCode.T))
-            {
-                showDebugText = !showDebugText;
-                UpdateDebugHandsText();
-            }
+            debugTexts[i].gameObject.SetActive(showDebugText);
+            if (!showDebugText) continue;
             
-            if (!_autoTurns && Input.GetKeyDown(KeyCode.Space))
-                StartNextTurn();
-        }
+            debugTexts[i].text = HandToString(_players[i].hand);
 
-        private void CreatePlayers()
-        {
-            for (int i = 0; i < PLAYERS; i++)
-            {
-                Player p;
-                if (i == 0) p = new HumanPlayer();
-                else p = new AIPlayer();
-                string playerName = "Player " + (i + 1);
-                p.playerName = playerName;
-                
-                _players.Add(p);
-            }
-        }
-        
-        private void Deal()
-        {
-            foreach (Player p in _players)
-            {
-                p.hand.Clear();
-            }
-            
-            StartCoroutine(DealAll());
-        }
-
-        IEnumerator DealAll()
-        {
-            for (int i = 0; i < _deck.gameDeck.Count; i++)
-            {
-                _players[i % PLAYERS].hand.Add(_deck.gameDeck[i]);
-
-                if (i % PLAYERS == 0)
-                {
-                    handManager.AddCard(_deck.gameDeck[i]);
-                }
-                
-                yield return new WaitForSeconds(dealTime);
-            }
-            
-            foreach (Player p in _players)
-            {
-                p.SortHand();
-            }
-            
-            _playersActive = new List<Player>(_players);
-            UpdateDebugHandsText();
-            StartSet();
-        }
-        
-        public void StartRound()
-        {
-            nextRoundButton.gameObject.SetActive(false);
-            nextSetButton.gameObject.SetActive(false);
-            
-            handManager.ClearHand();
-            
-            _currentCardInSet = null;
-            _setWinner = null;
-            
-            _deck = new Deck();
-            _deck.BuildDeck();
-            _deck.RandomiseDeck();
-            Deal();
-        }
-        
-        public void StartSet()
-        {
-            _gameState =  GameState.Playing;
-            TryAutoNextTurn();
-            UpdateDebugHandsText();
-        }
-        
-        private void StartNextTurn()
-        {
-            // Check state
-            if (_gameState != GameState.Playing || _turnInProgress) return;
-            
-            // If the current player is out, skip their turn
-            if (!IsPlayerActive(CurrentPlayer))
-            {
-                AdvanceTurn();
-                TryAutoNextTurn();
-                return;
-            }
-
-            if (CurrentPlayer is HumanPlayer)
-                skipButton.gameObject.SetActive(true);
+            if (_round.HasPassed(_players[i]))
+                debugTexts[i].color = Color.grey;
+            else if (_players[i] == _round.LastSetWinner)
+                debugTexts[i].color = Color.yellow;
             else
-                skipButton.gameObject.SetActive(false);
-
-            Debug.Log("Turn Starting for " + CurrentPlayer.playerName);
-            
-            // Check if current card is null and set card played
-            if (_currentCardInSet == null)
-                _currentCardInSet = new CardData();
-
-            _turnInProgress = true;
-
-            StartCoroutine(CurrentPlayer.PlayCard(OnCardDecided));
-        }
-        
-        private void OnCardDecided(CardData cardPlayed)
-        {
-            _turnInProgress = false;
-            
-            if (cardPlayed != null)
-                HandleTurn(cardPlayed);
-            else
-                HandleSkip();
-
-            TryAutoNextTurn();
-        }
-
-        private bool IsPlayerActive(Player player)
-        {
-            return _playersActive.Contains(player);
-        }
-
-        private void HandleTurn(CardData cardPlayed)
-        {
-            _currentCardInSet = cardPlayed;
-            _lastPlayer =  CurrentPlayer;
-                
-            // Update pile
-            Pile.instance.AddCard(cardPlayed);
-                
-            if (_currentPlayerIndex == 0) // If it's the human players turn, update the hand
-            {
-                handManager.RemoveCard(cardPlayed); // Debug for now
-            }
-                
-            if (CurrentPlayer.hand.Count == 0) // If this players hand is empty
-            {
-                _playersOutIndex++;
-                if (_playersOutIndex >= 3)
-                    EndRound(CurrentPlayer);
-            }
-            
-            AdvanceTurn();
-        }
-
-        private void HandleSkip()
-        {
-            _playersActive.Remove(CurrentPlayer);
-            Debug.Log("CardPlayed is null, " + CurrentPlayer.playerName + " skipped");
-
-            AdvanceTurn();
-            
-            if (_playersActive.Count <= 1)
-            {
-                UpdateDebugHandsText();
-                EndSet();
-            }
-        }
-
-        private void AdvanceTurn()
-        {
-            _currentPlayerIndex = (_currentPlayerIndex + 1) % PLAYERS;
-            UpdateDebugHandsText();
-        }
-
-        private void EndSet()
-        {
-            Debug.Log("Set Over, " +  _lastPlayer.playerName + " wins!");
-            
-            _setWinner = _lastPlayer;
-            _playersActive = new List<Player>(_players);
-            _currentCardInSet = null;
-
-            Pile.instance.ClearPile();
-            
-            _currentPlayerIndex = _players.IndexOf(_lastPlayer); // Sets currentPlayerIndex to the index of _lastPlayer
-            _lastPlayer = CurrentPlayer;
-            
-            nextSetButton.gameObject.SetActive(true);
-            _gameState = GameState.RoundOver;
-        }
-
-        private void EndRound(Player winner)
-        {
-            Debug.Log("Round End, " + winner.playerName + " wins!");
-            _gameState = GameState.GameOver;
-            _playersOutIndex = 0;
-            
-            nextSetButton.gameObject.SetActive(false);
-            nextRoundButton.gameObject.SetActive(true);
-        }
-
-        public void PlayerSkips()
-        {
-            _turnInProgress = false;
-            HandleSkip();
-            TryAutoNextTurn();
-            skipButton.gameObject.SetActive(false);
-        }
-
-        /// <summary>
-        /// Helpers for debugging
-        /// </summary>
-        /// <returns></returns>
-
-        private void TryAutoNextTurn()
-        {
-            if (_autoTurns && _gameState == GameState.Playing && !_turnInProgress)
-                StartNextTurn();
-        }
-        
-        private static string HandToString(List<CardData> cd)
-        {
-            var sb = new System.Text.StringBuilder();
-            foreach (CardData card in cd)
-            {
-                sb.AppendLine(card.rank + " of " + card.suit);
-            }
-            return sb.ToString();
-        }
-
-        private void UpdateDebugHandsText()
-        {
-            for (int i = 0; i < _players.Count; i++)
-            {
-                debugTexts[i].gameObject.SetActive(showDebugText);
-                if (!showDebugText) continue;
-                
-                debugTexts[i].text = HandToString(_players[i].hand);
-
-                if (!_playersActive.Contains(_players[i]))
-                    debugTexts[i].color = Color.grey;      // skipped this set
-                else if (_players[i] == _setWinner)
-                    debugTexts[i].color = Color.yellow;    // won the previous set
-                else
-                    debugTexts[i].color = Color.white;
-            }
-        }
-
-        public void ToggleAutoTurns()
-        {
-            _autoTurns = !_autoTurns;
-            Debug.Log("Auto turns " + _autoTurns);
+                debugTexts[i].color = Color.white;
         }
     }
+
+    public void ToggleAutoTurns()
+    {
+        _autoTurns = !_autoTurns;
+        Debug.Log("Auto turns " + _autoTurns);
+    }
+}

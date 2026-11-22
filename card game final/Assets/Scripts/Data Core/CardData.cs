@@ -1,5 +1,4 @@
 using System;
-using Mono.Cecil;
 
 [Serializable]
 public class CardData

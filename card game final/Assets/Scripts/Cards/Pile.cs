@@ -1,9 +1,12 @@
+using System.Collections;
 using UnityEngine;
 
 public class Pile : MonoBehaviour
 {
-    [SerializeField] private CardObject topCard; 
-    private CardData _topCardData; 
+    [SerializeField] private CardObject[] topCards; 
+    private Vector3 _baseTopCardPosition;
+    private Coroutine _moveCoroutine;
+    
     public static Pile instance;
 
     void Awake()
@@ -24,32 +27,47 @@ public class Pile : MonoBehaviour
         ClearPile();
     }
     
-    public void AddCard(CardData card)
+    public void AddCard(Move move, float delay)
     {
-        if (!topCard.gameObject.activeInHierarchy)
-        {
-            topCard.gameObject.SetActive(true);
-        }
+        if (move == null || move.IsPass) return;
+
+        // a newer move replaces any one still waiting to land
+        if (_moveCoroutine != null) StopCoroutine(_moveCoroutine);
+
+        _moveCoroutine = StartCoroutine(AddAfterDelay(move, delay));
+    }
+
+    private IEnumerator AddAfterDelay(Move move, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        _moveCoroutine = null;
         
-        _topCardData = card;
-        topCard._cardData = card;
-        var face = topCard._cardData.FindFace();
-        topCard.UpdateText(face);
-        topCard.UpdateSprite();
+        if (move.Count > topCards.Length)
+            Debug.LogWarning("Pile has " + topCards.Length + " slots but the move has " + move.Count + " cards");
+
+        for (int i = 0; i < topCards.Length; i++)
+        {
+            bool active = i < move.Count;
+            topCards[i].gameObject.SetActive(active);
+            if (!active) continue;
+
+            Vector3 cardOffset = new Vector3(0.4f, 0f, -0.01f);
+            float spread = i - (move.Count - 1) * 0.5f;
+            topCards[i].transform.localPosition = _baseTopCardPosition + cardOffset * spread;
+
+            CardData card = move.Cards[i];
+            topCards[i]._cardData = card;
+            topCards[i].UpdateText(card.FindFace());
+            topCards[i].UpdateSprite();
+        }
     }
 
     public void ClearPile()
     {
-        _topCardData = null;
-        topCard._cardData = null;
-
-        topCard.gameObject.SetActive(false);
-    }
-
-    public bool IsCardValid(CardData card)
-    {
-        if (_topCardData == null)
-            return true; // this means the pile is empty, so anything can be played
-        return card.rank > _topCardData.rank;
+        foreach (var card in topCards)
+        {
+            card._cardData = null;
+            card.gameObject.SetActive(false);
+        }
     }
 }

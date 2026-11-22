@@ -6,7 +6,9 @@ using UnityEngine;
 public abstract class Player
 {
     public string playerName;
+    public Titles title;
     public List<CardData> hand = new List<CardData>();
+    public GameRules Rules { get; } = new GameRules();
 
     public void SortHand()
     {
@@ -17,5 +19,5 @@ public abstract class Player
     }
 
     // Will call onDecided (callback) when a card is played, or null for a pass
-    public abstract IEnumerator PlayCard(Action<CardData> onDecided);  
+    public abstract IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided);  
 }

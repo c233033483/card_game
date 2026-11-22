@@ -4,20 +4,28 @@ using UnityEngine;
 
 public class AIPlayer : Player
 {
-    public override IEnumerator PlayCard(Action<CardData> onDecided)
+    public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
-        yield return new WaitForSeconds(0.5f); 
+        yield return new WaitForSeconds(0.5f);
         
-        foreach (CardData card in hand) // Sorted low-high
+        bool isLeading = currentPlay == null || currentPlay.IsPass;
+        int size = isLeading ? 1 : currentPlay.Cards.Count; // defaut 1 card for now until rules updates in future
+        
+        for (int i = 0; i + size <= hand.Count; i++)
         {
-            if (Pile.instance.IsCardValid(card))
+            // Just picks the first card that can be played,
+            // will be moved to a different class soon when pairs and triples can be placed
+            
+            var move = new Move(hand.GetRange(i, size));
+            
+            bool legal = mustMatch ? Rules.IsSkip(move, currentPlay) : Rules.IsLegal(move, currentPlay);
+            if (legal)
             {
-                onDecided(card); // Put down on top of the placed card
-                hand.Remove(card);
+                onDecided(move);
                 yield break;
             }
         }
         
-        onDecided(null); // nothing valid, so pass
+        onDecided(Move.Pass()); // Put down cards in Move
     }
 }

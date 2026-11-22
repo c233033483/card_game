@@ -7,7 +7,9 @@ public class CardObject : MonoBehaviour
     public SpriteRenderer renderer;
     public CardData _cardData;
     [SerializeField] private TMP_Text[] cardTexts =  new TMP_Text[3];
-
+    private static readonly Color RedSuit = new Color32(0xC6, 0x27, 0x26, 0xFF);
+    
+    
     [Tooltip("0=Clubs,1=Spades,2=Diamonds,3=Hearts")]
     [SerializeField] private Sprite currentSprite;
     [SerializeField] private Sprite[] cardSprites;
@@ -19,10 +21,13 @@ public class CardObject : MonoBehaviour
     
     public void UpdateText(string face)
     {
-        print(face);
+        bool isRed = _cardData.suit == Suits.Diamonds || _cardData.suit == Suits.Hearts;
+        Color textColor = isRed ? RedSuit : Color.black;
+        
         foreach (var text in cardTexts)
         {
             text.text = face;
+            text.color = textColor;
         }
     }
 
@@ -32,16 +37,16 @@ public class CardObject : MonoBehaviour
         {
             case Suits.Clubs:
                 currentSprite = cardSprites[0];
-                return;
+                break;
             case Suits.Spades:
                 currentSprite = cardSprites[1];
-                return;
+                break;
             case Suits.Diamonds:
                 currentSprite = cardSprites[2];
-                return;
+                break;
             case Suits.Hearts:
                 currentSprite = cardSprites[3];
-                return;
+                break;
             default:
                 return;
         }
