@@ -1,31 +1,42 @@
 using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 public class AIPlayer : Player
 {
     public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.5f);
         
+        onDecided(ChooseMove(currentPlay, mustMatch));
+    }
+
+    private Move ChooseMove(Move currentPlay, bool mustMatch)
+    {
         bool isLeading = currentPlay == null || currentPlay.IsPass;
-        int size = isLeading ? 1 : currentPlay.Cards.Count; // defaut 1 card for now until rules updates in future
-        
-        for (int i = 0; i + size <= hand.Count; i++)
+
+        // hand is sorted, group by rank
+        var groups = hand.GroupBy(c => c.rank);
+
+        foreach (var group in groups)
         {
-            // Just picks the first card that can be played,
-            // will be moved to a different class soon when pairs and triples can be placed
+            var cards = group.ToList();
+
+            // if leading, size of group, if following, same as pile
+            int size = isLeading ? Mathf.Min(cards.Count, GameRules.MAX_CARDS_IN_MOVE) : currentPlay.Cards.Count;
+
+            if (cards.Count < size) continue;
             
-            var move = new Move(hand.GetRange(i, size));
-            
+            var move = new Move(cards.GetRange(0, size));
+
             bool legal = mustMatch ? Rules.IsSkip(move, currentPlay) : Rules.IsLegal(move, currentPlay);
             if (legal)
             {
-                onDecided(move);
-                yield break;
+                return move;
             }
         }
         
-        onDecided(Move.Pass()); // Put down cards in Move
+        return Move.Pass();
     }
 }

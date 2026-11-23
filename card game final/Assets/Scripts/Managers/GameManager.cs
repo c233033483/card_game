@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public HandManager handManager;
     private Deck _deck;
     private RoundController _round;
+    [SerializeField] private GameplayUI gameplayUI;
 
     private readonly List<Player> _players = new List<Player>();
     private List<Player> _playersActive;
@@ -28,16 +29,9 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private TMP_Text[] debugTexts = new TMP_Text[4];
     [SerializeField] private bool showDebugText;
-
-    public Button nextSetButton;
-    public Button nextRoundButton;
-    public Button passButton;
-
+    
     private void Start()
     {
-        nextSetButton.gameObject.SetActive(false);
-        nextRoundButton.gameObject.SetActive(true);
-        passButton.gameObject.SetActive(false);
         _autoTurns = true;
         
         CreatePlayers();
@@ -49,6 +43,8 @@ public class GameManager : MonoBehaviour
         _round.OnTurnChange += _ => UpdateDebugHandsText();
         _round.OnPlayerPass += _ => UpdateDebugHandsText();
         _round.OnPlayerSkipped += _ => UpdateDebugHandsText();
+        
+        gameplayUI.Init(_round);
     }
 
     private void Update()
@@ -112,9 +108,6 @@ public class GameManager : MonoBehaviour
 
     public void StartRound()
     {
-        nextRoundButton.gameObject.SetActive(false);
-        nextSetButton.gameObject.SetActive(false);
-        
         handManager.ClearHand();
         
         _deck = new Deck();
@@ -125,7 +118,6 @@ public class GameManager : MonoBehaviour
 
     public void StartSet()
     {
-        nextSetButton.gameObject.SetActive(false);
         _round.SetStart();
         TryAutoNextTurn();
     }
@@ -135,14 +127,17 @@ public class GameManager : MonoBehaviour
         if (_round.State != GameState.Playing || turnInProgress) return;
 
         Player p = _round.CurrentPlayer;
-        passButton.gameObject.SetActive(p is HumanPlayer);
         turnInProgress = true;
+        
+        HumanTurnInput.Instance.SetSelectionEnabled(p is HumanPlayer);
 
         _turnRoutine = StartCoroutine(p.PlayCard(_round.CurrentPlay, _round.MustMatch, OnCardDecided));
     }
 
     private void OnCardDecided(Move move)
     {
+        HumanTurnInput.Instance.SetSelectionEnabled(false);
+        
         _turnRoutine = null;
         turnInProgress = false;
 
@@ -164,6 +159,8 @@ public class GameManager : MonoBehaviour
     {
         if (!_round.Pass()) return; // ignored if the human is leading
         
+        HumanTurnInput.Instance.SetSelectionEnabled(false);
+        
         if (_turnRoutine != null)
         {
             StopCoroutine(_turnRoutine);
@@ -172,7 +169,6 @@ public class GameManager : MonoBehaviour
         
         turnInProgress = false;
         TryAutoNextTurn();
-        passButton.gameObject.SetActive(false);
     }
 
     private void OnSetEnded(Player winner)
@@ -180,7 +176,6 @@ public class GameManager : MonoBehaviour
         Debug.Log("Set Over, " +  winner.playerName + " wins!");
         
         Pile.instance.ClearPile();
-        nextSetButton.gameObject.SetActive(true);
         UpdateDebugHandsText();
     }
 
@@ -188,9 +183,8 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Round End, " + winner.playerName + " wins!");
         
-        Pile.instance.ClearPile();
-        nextSetButton.gameObject.SetActive(false);
-        nextRoundButton.gameObject.SetActive(true);        
+        Pile.instance.ClearPile();   
+        handManager.ClearHand();
     }
 
     /// <summary>
