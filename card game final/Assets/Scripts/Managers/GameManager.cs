@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
         _round.OnPlayerPass += _ => UpdateDebugHandsText();
         _round.OnPlayerSkipped += _ => UpdateDebugHandsText();
         
-        gameplayUI.Init(_round);
+        gameplayUI.Init(_round, cardPlayDuration);
     }
 
     private void Update()
@@ -116,11 +116,14 @@ public class GameManager : MonoBehaviour
         Deal();
     }
 
+    
     public void StartSet()
     {
+        Pile.instance.ClearPile();
         _round.SetStart();
         TryAutoNextTurn();
     }
+
 
     private void StartNextTurn()
     {

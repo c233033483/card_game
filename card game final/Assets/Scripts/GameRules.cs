@@ -16,11 +16,15 @@ public class GameRules
     {
         if (move == null || move.IsPass) return true;
         if (move.Count > MAX_CARDS_IN_MOVE) return false;
+        if (IsTwoOfHearts(currentlyDown)) return false;
         
         foreach (var c in move.Cards)
             if (c.rank != move.Rank) return false;  // make sure they're all same rank, if not, not legal
         
         if (currentlyDown == null || currentlyDown.IsPass) return true; // checking if this move is a leading one, if yes, they can be played
+        
+        // 2 of Hearts combo: can be played on anything, including pairs and triples
+        if (IsTwoOfHearts(move)) return true;
         
         // check if this will skip the next player
         if (IsSkip(move, currentlyDown)) return true;
@@ -38,6 +42,7 @@ public class GameRules
     public bool IsSkip(Move move, Move currentlyDown)
     {
         if (move == null || move.IsPass) return false;
+        if (IsTwoOfHearts(move)) return false; // best card, whoever placed the 2 hearts will win the set
         if (move.Count > MAX_CARDS_IN_MOVE) return false;
         if (currentlyDown == null || currentlyDown.IsPass) return false;
         if (move.Count != currentlyDown.Count) return false;
@@ -61,5 +66,16 @@ public class GameRules
         foreach (var c in hand)
             if (c.rank == currentlyDown.Rank) n++;
         return n >= currentlyDown.Count;
+    }
+    
+    /// <summary>
+    /// True if the move is the 2 of Hearts played on its own.
+    /// </summary>
+    public bool IsTwoOfHearts(Move move)
+    {
+        if (move == null || move.IsPass || move.Count != 1) return false;
+
+        CardData c = move.Cards[0];
+        return c.rank == Ranks.Two && c.suit == Suits.Hearts;
     }
 }

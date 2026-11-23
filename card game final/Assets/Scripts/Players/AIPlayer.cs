@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ public class AIPlayer : Player
 {
     public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(1.2f);
         
         onDecided(ChooseMove(currentPlay, mustMatch));
     }
@@ -34,6 +35,18 @@ public class AIPlayer : Player
             if (legal)
             {
                 return move;
+            }
+        }
+        
+        // If player has 2 of hearts and nothing else that they can play (over a pair or triple, persay), then play it!
+        if (!isLeading && !mustMatch)
+        {
+            CardData twoOfHearts = hand.FirstOrDefault(c => c.rank == Ranks.Two && c.suit == Suits.Hearts);
+            if (twoOfHearts != null)
+            {
+                var move = new Move(new List<CardData> { twoOfHearts });
+                if (Rules.IsLegal(move, currentPlay))
+                    return move;
             }
         }
         

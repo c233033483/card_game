@@ -39,6 +39,7 @@ public class RoundController
 
     //Events
     public event Action<Player> OnSetOver;
+    public event Action<Player> OnSetClosedOut;
     public event Action<Player> OnRoundOver;
     public event Action<Player> OnPlayerPass;
     public event Action<Player> OnTurnChange;
@@ -57,6 +58,10 @@ public class RoundController
     private bool _turnInProgress;
     private bool _autoTurns;
 
+    private int _sameRankRun;
+    private Ranks _runRank;
+    private const int CLOSEOUT_COUNT = 4;
+    
     public RoundController(List<Player> players)
     {
         _players = players;
@@ -67,9 +72,13 @@ public class RoundController
     // Called by GM after hands are dealt and sorted
     public void RoundStart()
     {
+        Pile.instance.ClearPile();
+        
         _finishOrder.Clear();
         _lastPlayer = null;
         _nextPlayerSkipped = false;
+        
+        _currentPlayerIndex = WhoGoesFirst();
         
         SetStart();
     }
@@ -78,6 +87,8 @@ public class RoundController
     {
         _passed.Clear();
         CurrentPlay = null;
+        _sameRankRun = 0;
+        _nextPlayerSkipped = false;
         
         State = GameState.Playing;
         OnTurnChange?.Invoke(CurrentPlayer);
@@ -98,6 +109,11 @@ public class RoundController
         
         foreach (var c in move.Cards)
             p.hand.Remove(c);
+        
+        // track run of same-rank cards for the four-of-a-kind closeout
+        bool continuesRun = CurrentPlay != null && !Rules.IsTwoOfHearts(move) && move.Rank == _runRank && _sameRankRun > 0;
+        _sameRankRun = continuesRun ? _sameRankRun + move.Count : move.Count;
+        _runRank = move.Rank;
         
         CurrentPlay = move;
         _nextPlayerSkipped = isSkip;
@@ -140,6 +156,14 @@ public class RoundController
             EndRound();
             return;
         }
+        
+        if (_sameRankRun >= CLOSEOUT_COUNT)
+        {
+            OnSetClosedOut?.Invoke(_lastPlayer);
+            EndSet();
+            return;
+        }
+        
         if (IsSetOver())
         {
             EndSet();
@@ -224,13 +248,27 @@ public class RoundController
         
         OnTitlesAssigned?.Invoke(_finishOrder);
     }
-    
+
 
     /// <summary>
     /// Helpers for debugging
     /// </summary>
     /// <returns></returns>
 
+    private int WhoGoesFirst()
+    {
+        for (int i = 0; i < _players.Count; i++)
+        {
+            foreach (var card in _players[i].hand)
+            {
+                if (card.rank == Ranks.Two && card.suit == Suits.Hearts)
+                    return i;
+            }
+        }
+
+        return 1;
+    }
+    
     // True when nobody except the last player to play can still act
     private bool IsSetOver()
     {
