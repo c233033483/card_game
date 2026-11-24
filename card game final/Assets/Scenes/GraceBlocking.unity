@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 1
+  m_Fog: 0
   m_FogColor: {r: 0.10943389, g: 0.068344556, b: 0.08375306, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.041
@@ -3130,7 +3130,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
+  m_RequiresDepthTextureOption: 1
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
@@ -4127,6 +4127,75 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 648442511}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &652197689
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5481877305480373052, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_Name
+      value: SmokeAir
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481877305480373052, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 21.43862
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 12.827399
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.039
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5.0953
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.13
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9152712638083054694, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 70bcaab060c292a45991c40ec103333e, type: 3}
 --- !u!1 &659253827
 GameObject:
   m_ObjectHideFlags: 0
@@ -15265,7 +15334,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: efc4e15ce38d3a4458772d807ca5c959, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.269
+  m_Volume: 0.329
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -21601,3 +21670,4 @@ SceneRoots:
   - {fileID: 593805116}
   - {fileID: 1776602033}
   - {fileID: 2078079844}
+  - {fileID: 652197689}
