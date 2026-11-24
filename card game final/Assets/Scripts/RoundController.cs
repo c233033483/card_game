@@ -47,7 +47,10 @@ public class RoundController
     public event Action<Player, int> OnPlayerOut; // player, place (1 = first out)
     public event Action<List<Player>> OnTitlesAssigned;
     public event Action<Player> OnPlayerSkipped;
-    
+
+    public static RoundController Current { get; private set; }
+    public static event Action<RoundController> Created;
+
     //Private data
     private readonly List<Player> _players;
     private readonly HashSet<Player> _passed =  new HashSet<Player>();
@@ -61,10 +64,13 @@ public class RoundController
     private int _sameRankRun;
     private Ranks _runRank;
     private const int CLOSEOUT_COUNT = 4;
-    
+
     public RoundController(List<Player> players)
     {
         _players = players;
+
+        Current = this;
+        Created?.Invoke(this);
     }
 
     public bool HasPassed(Player p) => _passed.Contains(p);
