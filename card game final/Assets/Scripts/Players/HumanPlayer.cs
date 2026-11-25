@@ -6,6 +6,14 @@ using UnityEngine;
 
 public class HumanPlayer : Player
 {
+    public override void SortHand()
+    {
+        if (hand.Count != 0)
+        {
+            hand.Sort((x, y) => x.rank.CompareTo(y.rank));
+        }
+    }
+
     public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
         var input = HumanTurnInput.Instance;

@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameplayUI gameplayUI;
 
     private readonly List<Player> _players = new List<Player>();
+    [SerializeField] private bool[] smartAI = new bool[PLAYERS];
     private List<Player> _playersActive;
 
     [SerializeField] private float dealTime;
@@ -63,11 +64,15 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < PLAYERS; i++)
         {
             Player p;
-            if (i == 0) p = new HumanPlayer();
-            else p = new AIPlayer();
-            string playerName = "Player " + (i + 1);
-            p.playerName = playerName;
             
+            if (i == 0) p = new HumanPlayer();
+            else
+            {
+                bool smart = smartAI != null && i < smartAI.Length && smartAI[i];
+                p = new AIPlayer { isSmart = smart };
+            }
+            
+            p.playerName = "Player " + (i + 1);
             _players.Add(p);
         }
     }

@@ -6,6 +6,23 @@ using UnityEngine;
 
 public class AIPlayer : Player
 {
+    [Header("Difficulty")]
+    public bool isSmart = false;
+
+    [Tooltip("Non-smart AI only: chance to pass on a turn it could have played (never when leading).")]
+    [Range(0f, 1f)] public float passChance = 0.15f;
+    
+    
+    public override void SortHand()
+    {
+        if (!isSmart) return; // dumb AI keeps its hand in dealt order
+        
+        if (hand.Count != 0)
+        {
+            hand.Sort((x, y) => x.rank.CompareTo(y.rank));
+        }
+    }
+    
     public override IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided)
     {
         yield return new WaitForSeconds(1.2f);
@@ -17,6 +34,10 @@ public class AIPlayer : Player
     {
         bool isLeading = currentPlay == null || currentPlay.IsPass;
 
+        // a dumb AI sometimes just passes instead of playing at a random value under the passchance
+        if (!isSmart && !isLeading && !mustMatch && UnityEngine.Random.value < passChance)
+            return Move.Pass();
+        
         // hand is sorted, group by rank
         var groups = hand.GroupBy(c => c.rank);
 

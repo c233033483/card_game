@@ -10,13 +10,7 @@ public abstract class Player
     public List<CardData> hand = new List<CardData>();
     public GameRules Rules { get; } = new GameRules();
 
-    public void SortHand()
-    {
-        if (hand.Count != 0)
-        {
-            hand.Sort((x, y) => x.rank.CompareTo(y.rank));
-        }
-    }
+    public abstract void SortHand();
 
     // Will call onDecided (callback) when a card is played, or null for a pass
     public abstract IEnumerator PlayCard(Move currentPlay, bool mustMatch, Action<Move> onDecided);  
