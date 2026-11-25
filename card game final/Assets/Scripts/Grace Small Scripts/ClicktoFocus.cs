@@ -1,16 +1,12 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class ClicktoFocus : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private Camera cam;
 
-  
     [SerializeField] private GameObject[] toDisable;
-
-  
     [SerializeField] private GameObject[] toEnable;
 
     [SerializeField] private float focusDistance = 5f;
@@ -23,16 +19,23 @@ public class ClicktoFocus : MonoBehaviour
     private Vector3 originalPosition;
     private Quaternion originalRotation;
 
-    public void ToggleFocus()
+    
+    public void Focus()
     {
-        if (isFocused) ReturnToOriginal();
-        else FocusOnTarget();
+        if (isFocused) return; 
+        FocusOnTarget();
+    }
+
+  
+    public void Unfocus()
+    {
+        if (!isFocused) return; 
+        ReturnToOriginal();
     }
 
     private void FocusOnTarget()
     {
-        // Only save the original pose if we're not mid-move,
-        // otherwise we'd save a halfway position.
+        
         if (routine == null)
         {
             originalPosition = cam.transform.position;
