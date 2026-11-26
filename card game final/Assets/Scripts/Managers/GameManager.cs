@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float dealTime;
     [SerializeField] private bool turnInProgress;
     [SerializeField] private float cardPlayDuration = 0.5f;
+    [SerializeField] private int roundIndex;
 
     private const int PLAYERS = 4;
     private Coroutine _turnRoutine;
@@ -33,6 +34,7 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
+        roundIndex = 0;
         _autoTurns = true;
         
         CreatePlayers();
@@ -91,6 +93,15 @@ public class GameManager : MonoBehaviour
     {
         for (int i = 0; i < _deck.gameDeck.Count; i++)
         {
+            if (roundIndex == 0)
+            {
+                if (_deck.gameDeck[i].rank == Ranks.Two && _deck.gameDeck[i].suit == Suits.Hearts)
+                {
+                    _players[0].hand.Add(_deck.gameDeck[i]);
+                    continue;
+                }
+            }
+            
             _players[i % PLAYERS].hand.Add(_deck.gameDeck[i]);
 
             if (i % PLAYERS == 0)
@@ -190,6 +201,8 @@ public class GameManager : MonoBehaviour
     private void OnRoundEnded(Player winner)
     {
         Debug.Log("Round End, " + winner.playerName + " wins!");
+
+        roundIndex++;
         
         Pile.instance.ClearPile();   
         handManager.ClearHand();
