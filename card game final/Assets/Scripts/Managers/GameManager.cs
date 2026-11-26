@@ -91,24 +91,32 @@ public class GameManager : MonoBehaviour
 
     IEnumerator DealAll()
     {
+        CardData twoHeartsDealt = null;
+        if (roundIndex == 0)
+        {
+            twoHeartsDealt = _deck.gameDeck.Find(c => c.rank == Ranks.Two && c.suit == Suits.Hearts);
+
+            if (twoHeartsDealt != null)
+            {
+                _players[0].hand.Add(twoHeartsDealt);
+                handManager.AddCard(twoHeartsDealt);
+                yield return new WaitForSeconds(dealTime);
+            }
+        }
+        
+        int dealt = 0;
         for (int i = 0; i < _deck.gameDeck.Count; i++)
         {
-            if (roundIndex == 0)
-            {
-                if (_deck.gameDeck[i].rank == Ranks.Two && _deck.gameDeck[i].suit == Suits.Hearts)
-                {
-                    _players[0].hand.Add(_deck.gameDeck[i]);
-                    continue;
-                }
-            }
+            CardData card = _deck.gameDeck[i];
+            if (card == twoHeartsDealt) continue; // 2 of hearts already dealt
             
-            _players[i % PLAYERS].hand.Add(_deck.gameDeck[i]);
+            int seat = dealt % PLAYERS;
+            _players[seat].hand.Add(card);
 
-            if (i % PLAYERS == 0)
-            {
-                handManager.AddCard(_deck.gameDeck[i]);
-            }
-            
+            if (seat == 0)
+                handManager.AddCard(card);
+
+            dealt++;
             yield return new WaitForSeconds(dealTime);
         }
         

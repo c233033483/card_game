@@ -12,6 +12,7 @@ public class HandManager : MonoBehaviour
 {
     [Header("References")] [SerializeField]
     private SplineContainer splineContainer;
+    [SerializeField] private CardPrefabAsset cardPrefabs;
 
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private Transform playPoint;
@@ -25,7 +26,6 @@ public class HandManager : MonoBehaviour
 
     [Header("Card Prefabs")] 
     [Tooltip("0=Clubs,1=Spades,2=Diamonds,3=Hearts")] 
-    [SerializeField] private GameObject[] cardPrefabs;
     [SerializeField] private float selectLift = 0.3f;
 
     private readonly List<CardObject> _cards = new List<CardObject>();
@@ -48,16 +48,23 @@ public class HandManager : MonoBehaviour
     /// <param name="cardData">The card to display.</param>
     public void AddCard(CardData cardData)
     {
-        GameObject cardPrefab = GetPrefab(cardData);
-
+        GameObject cardPrefab = cardPrefabs.GetPrefab(cardData);
+        Debug.Log("Card added: " + cardData.rank + " of " + cardData.suit);
+        if (cardPrefab == null)
+        {
+            Debug.LogError($"No prefab for {cardData.rank} of {cardData.suit}");
+            return;
+        }
+        
         GameObject go = Instantiate(cardPrefab, spawnPoint.position, spawnPoint.rotation);
         CardObject co = go.GetComponent<CardObject>();
+        if (!co) co = go.AddComponent<CardObject>();
+        
+        SelectableCard selectable = go.GetComponent<SelectableCard>();
+        if (selectable == null) selectable = go.AddComponent<SelectableCard>();
 
         co.UpdateCardData(cardData);
-        var face = co._cardData.FindFace();
-        co.UpdateText(face);
-
-        go.GetComponent<SelectableCard>().Init(cardData);
+        selectable.Init(cardData);
 
         _cards.Add(co);
         UpdateCardPositions();
@@ -72,7 +79,7 @@ public class HandManager : MonoBehaviour
     {
         foreach (var card in cards)
         {
-            CardObject match = _cards.Find(c => c._cardData.rank == card.rank && c._cardData.suit == card.suit); 
+            CardObject match = _cards.Find(c => c.cardData.rank == card.rank && c.cardData.suit == card.suit); 
             if (!match) continue;
             
             _cards.Remove(match);
@@ -90,13 +97,13 @@ public class HandManager : MonoBehaviour
         // stop it being clickable while it flies
         var selectable = go.GetComponent<SelectableCard>();
         if (selectable) selectable.enabled = false;
-        foreach (var col in go.GetComponentsInChildren<Collider2D>()) col.enabled = false;
+        foreach (var col in go.GetComponentsInChildren<BoxCollider>()) col.enabled = false;
 
         t.DOKill();
 
         Sequence seq = DOTween.Sequence();
         seq.Join(t.DOMove(playPoint.position, delay).SetEase(Ease.OutQuad));
-        seq.Join(t.DORotateQuaternion(playPoint.rotation, delay));
+        seq.Join(t.DORotateQuaternion(playPoint.rotation * Quaternion.Euler(0f, 180f, 0f), delay));
         seq.SetLink(go); // kills the tween if the object is destroyed early
         seq.OnComplete(() => Destroy(go));
     }
@@ -129,12 +136,12 @@ public class HandManager : MonoBehaviour
             Vector3 worldPos = splineContainer.transform.TransformPoint(local);
             worldPos += Vector3.back * (zStep * i);
 
-            if (HumanTurnInput.Instance.IsSelected(_cards[i]._cardData))
+            if (HumanTurnInput.Instance.IsSelected(_cards[i].cardData))
                 worldPos += Vector3.up * selectLift;
             
             Vector3 tangent = splineContainer.transform.TransformDirection(spline.EvaluateTangent(t));
             float angle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
-            Quaternion rot = Quaternion.Euler(0f, 0f, angle);
+            Quaternion rot = Quaternion.Euler(0f, 180f, angle);
 
             c.DOKill();
             c.DOMove(worldPos, 0.25f);
@@ -152,6 +159,7 @@ public class HandManager : MonoBehaviour
         return 0.5f + offsetFromCenter * spacing;
     }
 
+    /*
     private GameObject GetPrefab(CardData cardData)
     {
         switch (cardData.suit)
@@ -167,6 +175,6 @@ public class HandManager : MonoBehaviour
             default:
                 return null;
         }
-    }
+    }*/
 }
 
