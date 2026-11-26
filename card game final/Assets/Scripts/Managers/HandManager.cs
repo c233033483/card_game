@@ -17,6 +17,8 @@ public class HandManager : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private Transform playPoint;
 
+    [SerializeField] private bool isHuman;
+    
     [Header("Layout")] 
     [SerializeField] private int maxCards = 13;
     [SerializeField] private float minSpacing = 0.07f;
@@ -32,13 +34,15 @@ public class HandManager : MonoBehaviour
 
     private void Start()
     {
-        HumanTurnInput.Instance.OnSelectionChanged += UpdateCardPositions;
+        if (isHuman)
+          HumanTurnInput.Instance.OnSelectionChanged += UpdateCardPositions;
     }
 
     private void OnDestroy()
     {
-        if (HumanTurnInput.Instance != null)
-            HumanTurnInput.Instance.OnSelectionChanged -= UpdateCardPositions;
+        if (isHuman)
+            if (HumanTurnInput.Instance != null)
+                HumanTurnInput.Instance.OnSelectionChanged -= UpdateCardPositions;
     }
     
 
@@ -57,14 +61,17 @@ public class HandManager : MonoBehaviour
         }
         
         GameObject go = Instantiate(cardPrefab, spawnPoint.position, spawnPoint.rotation);
+        
         CardObject co = go.GetComponent<CardObject>();
         if (!co) co = go.AddComponent<CardObject>();
-        
-        SelectableCard selectable = go.GetComponent<SelectableCard>();
-        if (selectable == null) selectable = go.AddComponent<SelectableCard>();
-
         co.UpdateCardData(cardData);
-        selectable.Init(cardData);
+
+        if (isHuman)
+        {
+            SelectableCard selectable = go.GetComponent<SelectableCard>();
+            if (selectable == null) selectable = go.AddComponent<SelectableCard>();
+            selectable.Init(cardData);
+        }
 
         _cards.Add(co);
         UpdateCardPositions();
@@ -122,33 +129,33 @@ public class HandManager : MonoBehaviour
     /// <summary>
     /// Animates each card into its slot along the spline's tangent
     /// </summary>
-    public void UpdateCardPositions()
+    private void UpdateCardPositions()
     {
         int n = _cards.Count;
         Spline spline = splineContainer.Spline;
+        Transform sc = splineContainer.transform;
 
         for (int i = 0; i < n; i++)
         {
             Transform c = _cards[i].transform;
             float t = GetT(i, n);
 
-            Vector3 local = spline.EvaluatePosition(t);
-            Vector3 worldPos = splineContainer.transform.TransformPoint(local);
-            worldPos += Vector3.back * (zStep * i);
+            Vector3 worldPos = sc.TransformPoint(spline.EvaluatePosition(t));
+            worldPos += sc.TransformDirection(Vector3.back) * (zStep * i);
 
-            if (HumanTurnInput.Instance.IsSelected(_cards[i].cardData))
-                worldPos += Vector3.up * selectLift;
-            
-            Vector3 tangent = splineContainer.transform.TransformDirection(spline.EvaluateTangent(t));
+            if (isHuman && HumanTurnInput.Instance.IsSelected(_cards[i].cardData))
+                worldPos += sc.TransformDirection(Vector3.up) * selectLift;
+
+            Vector3 tangent = spline.EvaluateTangent(t); // local space
             float angle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
-            Quaternion rot = Quaternion.Euler(0f, 180f, angle);
+            
+            Quaternion rot = sc.rotation * Quaternion.Euler(0f, 0f, angle) * Quaternion.Euler(0f, 180f, 0f);
 
             c.DOKill();
             c.DOMove(worldPos, 0.25f);
             c.DORotateQuaternion(rot, 0.25f);
         }
     }
-
 
     private float GetT(int index, int count)
     {
@@ -158,23 +165,4 @@ public class HandManager : MonoBehaviour
         float offsetFromCenter = index - (count - 1) * 0.5f;
         return 0.5f + offsetFromCenter * spacing;
     }
-
-    /*
-    private GameObject GetPrefab(CardData cardData)
-    {
-        switch (cardData.suit)
-        {
-            case Suits.Clubs:
-                return cardPrefabs[0];
-            case Suits.Spades:
-                return cardPrefabs[1];
-            case Suits.Diamonds:
-                return cardPrefabs[2];
-            case Suits.Hearts:
-                return cardPrefabs[3];
-            default:
-                return null;
-        }
-    }*/
 }
-

@@ -9,7 +9,7 @@ using UnityEngine.UI;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public HandManager handManager;
+    public HandManager[] handManagers = new HandManager[PLAYERS];
     private Deck _deck;
     private RoundController _round;
     [SerializeField] private GameplayUI gameplayUI;
@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
             if (twoHeartsDealt != null)
             {
                 _players[0].hand.Add(twoHeartsDealt);
-                handManager.AddCard(twoHeartsDealt);
+                handManagers[0].AddCard(twoHeartsDealt);
                 yield return new WaitForSeconds(dealTime);
             }
         }
@@ -112,9 +112,7 @@ public class GameManager : MonoBehaviour
             
             int seat = dealt % PLAYERS;
             _players[seat].hand.Add(card);
-
-            if (seat == 0)
-                handManager.AddCard(card);
+            handManagers[seat].AddCard(card);
 
             dealt++;
             yield return new WaitForSeconds(dealTime);
@@ -132,8 +130,6 @@ public class GameManager : MonoBehaviour
 
     public void StartRound()
     {
-        handManager.ClearHand();
-        
         _deck = new Deck();
         _deck.BuildDeck();
         _deck.RandomiseDeck();
@@ -179,7 +175,7 @@ public class GameManager : MonoBehaviour
     private void OnCardPlayed(Player p, Move move)
     {
         Pile.instance.AddCard(move, cardPlayDuration);
-        if (p is HumanPlayer) handManager.RemoveCard(move.Cards, cardPlayDuration);
+        handManagers[_players.IndexOf(p)].RemoveCard(move.Cards, cardPlayDuration);
     }
 
     public void PlayerPasses()
@@ -213,7 +209,9 @@ public class GameManager : MonoBehaviour
         roundIndex++;
         
         Pile.instance.ClearPile();   
-        handManager.ClearHand();
+        
+        foreach (var hand in handManagers)
+            hand.ClearHand();
     }
 
     /// <summary>
