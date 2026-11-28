@@ -18,6 +18,7 @@ public class GameplayUI : MonoBehaviour
 
     public float cardPlayingDelay;
     private RoundController _round;
+    private bool _skipHandleCardPlayed;
 
     // remembered so skip / out / closeout messages can say who played what
     private Player _lastMover;
@@ -28,6 +29,7 @@ public class GameplayUI : MonoBehaviour
     {
         _round = round;
         cardPlayingDelay = delay;
+        _skipHandleCardPlayed = false;
 
         _round.OnTurnChange += HandleTurnChange;
         _round.OnCardsPlayed += HandleCardsPlayed;
@@ -118,6 +120,8 @@ public class GameplayUI : MonoBehaviour
 
         if (human && _round.MustMatch)
         {
+            _skipHandleCardPlayed = true;
+            
             string by = _lastMover != null && _lastMove != null
                 ? Who(_lastMover) + " played " + Describe(_lastMove) + " and is skipping you! "
                 : "You're being skipped! ";
@@ -129,11 +133,13 @@ public class GameplayUI : MonoBehaviour
 
     private void HandleCardsPlayed(Player p, Move move)
     {
+        _skipHandleCardPlayed = false;
+        
         _lastMover = p;
         _lastMove = move;
 
         SetTurnButtons(false);
-        Feedback(Who(p) + " played " + Describe(move));
+        StartCoroutine(ShowAfterDelay(Who(p) + " played " + Describe(move)));
     }
 
     private void HandlePass(Player p)
@@ -144,6 +150,8 @@ public class GameplayUI : MonoBehaviour
     // "Player 2 played a Jack and skipped Player 3"
     private void HandleSkipped(Player skipped)
     {
+        _skipHandleCardPlayed = true;
+        
         if (_lastMover == null || _lastMove == null)
         {
             Feedback(Who(skipped) + (skipped is HumanPlayer ? " were" : " was") + " skipped");
@@ -155,6 +163,8 @@ public class GameplayUI : MonoBehaviour
 
     private void HandlePlayerOut(Player p, int place)
     {
+        _skipHandleCardPlayed = true;
+        
         string played = _lastMove != null ? " played " + Describe(_lastMove) + " and" : "";
         Feedback(Who(p) + played + " went out in " + Ordinal(place) + " place!");
     }
@@ -211,6 +221,12 @@ public class GameplayUI : MonoBehaviour
     private static string Who(Player p) => p is HumanPlayer ? "You" : p.playerName;
     private static string Whom(Player p) => p is HumanPlayer ? "you" : p.playerName;
 
+    private IEnumerator ShowAfterDelay(string msg)
+    {
+        yield return new WaitForSeconds(cardPlayingDelay);
+        if (!_skipHandleCardPlayed) feedbackText.text = msg;
+    }
+    
     private string Describe(Move m)
     {
         if (_round.Rules.IsTwoOfHearts(m)) return "the 2 of Hearts";

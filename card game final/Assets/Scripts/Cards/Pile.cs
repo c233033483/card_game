@@ -6,8 +6,6 @@ public class Pile : MonoBehaviour
 {
     [SerializeField] private CardPrefabAsset cardPrefab;
     [SerializeField] private Transform[] topCardsPositions; 
-    private Vector3 _baseTopCardPosition;
-    private Coroutine _moveCoroutine;
     
     private readonly List<GameObject> _spawned = new List<GameObject>();
     
@@ -35,33 +33,16 @@ public class Pile : MonoBehaviour
     {
         if (move == null || move.IsPass) return;
 
-        // a newer move replaces any one still waiting to land
-        if (_moveCoroutine != null) StopCoroutine(_moveCoroutine);
-
-        _moveCoroutine = StartCoroutine(AddAfterDelay(move, delay));
+        StartCoroutine(AddAfterDelay(move, delay));
     }
 
     private IEnumerator AddAfterDelay(Move move, float delay)
     {
         yield return new WaitForSeconds(delay);
-        _moveCoroutine = null;
-        
-        if (move.Count > topCardsPositions.Length)
-            Debug.LogWarning("Pile has " + topCardsPositions.Length + " slots but the move has " + move.Count + " cards");
 
-        DestroySpawned();
-        
-        for (int i = 0; i < move.Count; i++)
+        foreach (var card in move.Cards)
         {
-            /*
-            bool active = i < move.Count;
-            topCardsPositions[i].gameObject.SetActive(active);
-            if (!active) continue;
-            */
-
-            var card = move.Cards[i];
-
-            GameObject prefab = cardPrefab.GetPrefab(card);
+            GameObject prefab =  cardPrefab.GetPrefab(card);
             if (prefab == null)
             {
                 Debug.LogError($"No prefab for {card.rank} of {card.suit}");
@@ -69,35 +50,44 @@ public class Pile : MonoBehaviour
             }
 
             GameObject go = Instantiate(prefab, transform);
-            
-            Vector3 cardOffset = new Vector3(0.4f, 0f, -0.01f);
-            float spread = i - (move.Count - 1) * 0.5f;
-            go.transform.localPosition = _baseTopCardPosition + cardOffset * spread;
-            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-
             CardObject co = go.GetComponent<CardObject>();
+            
             if (co == null) co = go.AddComponent<CardObject>();
             co.cardData = card;
 
             _spawned.Add(go);
         }
+
+        // keep only the last N cards (N = number of slots)
+        while (_spawned.Count > topCardsPositions.Length)
+        {
+            Destroy(_spawned[0]);
+            _spawned.RemoveAt(0);
+        }
+        
+        ReorderPile();
+    }
+
+    // newest card goes in slot 0 (top), older cards push down toward the last slot
+    private void ReorderPile()
+    {
+        int count = _spawned.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            Transform slot = topCardsPositions[count - 1 - i];
+            _spawned[i].transform.SetPositionAndRotation(
+                slot.position,
+                slot.rotation * Quaternion.Euler(0f, 0f, 0f));
+        }
     }
 
     public void ClearPile()
     {
-        if (_moveCoroutine != null)
-        {
-            StopCoroutine(_moveCoroutine);
-            _moveCoroutine = null;
-        }
-
-        DestroySpawned();
-    }
-    
-    private void DestroySpawned()
-    {
+        StopAllCoroutines();
+        
         foreach (var go in _spawned)
-            if (go != null) Destroy(go);
+            if (go) Destroy(go);
 
         _spawned.Clear();
     }

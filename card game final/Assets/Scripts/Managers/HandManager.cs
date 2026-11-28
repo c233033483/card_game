@@ -53,7 +53,7 @@ public class HandManager : MonoBehaviour
     public void AddCard(CardData cardData)
     {
         GameObject cardPrefab = cardPrefabs.GetPrefab(cardData);
-        Debug.Log("Card added: " + cardData.rank + " of " + cardData.suit);
+        //Debug.Log("Card added: " + cardData.rank + " of " + cardData.suit);
         if (cardPrefab == null)
         {
             Debug.LogError($"No prefab for {cardData.rank} of {cardData.suit}");

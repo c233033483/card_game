@@ -15,6 +15,12 @@ public class CameraController : MonoBehaviour
     public bool lockCursor = true;
     public bool returnToCenterOnRelease = false;
 
+    [Header("Zoom")] 
+    public Transform pileZoomPoint;
+    public float zoomSpeed =5f;
+    private Vector3 _startPosition;
+    private bool _zoomedIn;
+    
     private float _yaw;
     private float _pitch;
     private float _targetYaw;
@@ -25,9 +31,8 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         _startRotation = transform.localRotation;
+        _startPosition = transform.position;
     }
-
-    
     
     void Update()
     {
@@ -57,6 +62,13 @@ public class CameraController : MonoBehaviour
         _pitch = _targetPitch;
 
         transform.localRotation = _startRotation * Quaternion.Euler(_pitch, _yaw, 0f);
+        
+        float scroll = Input.mouseScrollDelta.y;
+        if (scroll > 0f) _zoomedIn = true;
+        else if (scroll < 0f) _zoomedIn = false;
+
+        Vector3 targetPos = (_zoomedIn && pileZoomPoint != null) ? pileZoomPoint.position : _startPosition;
+        transform.position = Vector3.Lerp(transform.position, targetPos, zoomSpeed * Time.deltaTime);
     }
     
     private void SetLooking(bool on)
